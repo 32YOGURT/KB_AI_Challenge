@@ -1,0 +1,14 @@
+# Web framework
+fastapi
+
+# Embeddings
+openai
+
+# Vector DB
+qdrant-client
+
+# PDF parsing
+pdfplumber
+
+# Config
+python-dotenv

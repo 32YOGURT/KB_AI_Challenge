@@ -1,0 +1,5 @@
+{
+  "hooks": {
+    "WorktreeCreate": "cp $CLAUDE_MAIN_REPO/.env* ."
+  }
+}
