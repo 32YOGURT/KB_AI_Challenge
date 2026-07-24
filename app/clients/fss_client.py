@@ -4,17 +4,29 @@ Host: http://finlife.fss.or.kr
 공통 요청 변수: auth(인증키), topFinGrp(권역코드), pageNo(페이지 번호)
 응답 포맷: JSON 고정 (경로에 .json 확장자 사용)
 
-엔드포인트별 파라미터/응답 스키마는 각 search_* 메서드에서 다룬다.
+엔드포인트별 응답은 app/schemas/fss/*에 정의된 모델로 검증해 반환한다.
 정기예금(fdrmDpstApi)만 다른 엔드포인트들과 달리 /finlifeapi가 아닌 /finlife 하위에 있다.
 """
 
 from __future__ import annotations
 
+from typing import TypeVar
+
 import httpx
+from pydantic import BaseModel, ValidationError
 
 from app.config import FSS_API_KEY
+from app.schemas.fss.business_loan import Model as BusinessLoanSearchResponse
+from app.schemas.fss.company import Model as CompanySearchResponse
+from app.schemas.fss.credit_loan import Model as CreditLoanSearchResponse
+from app.schemas.fss.deposit import Model as DepositSearchResponse
+from app.schemas.fss.mortgage_loan import Model as MortgageLoanSearchResponse
+from app.schemas.fss.rent_house_loan import Model as RentHouseLoanSearchResponse
+from app.schemas.fss.saving import Model as SavingSearchResponse
 
-HOST = "http://finlife.fss.or.kr"
+HOST = "https://finlife.fss.or.kr"
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class FSSAPIError(Exception):
@@ -26,9 +38,9 @@ class FSSClient:
         self._api_key = api_key or FSS_API_KEY
         if not self._api_key:
             raise FSSAPIError("FSS_API_KEY가 설정되지 않았습니다 (.env 확인).")
-        self._client = httpx.Client(base_url=host.rstrip("/"), timeout=timeout)
+        self._client = httpx.Client(base_url=host.rstrip("/"), timeout=timeout, follow_redirects=True)
 
-    def close(self) -> None:
+    def close(self) -> None:    
         self._client.close()
 
     def __enter__(self) -> "FSSClient":
@@ -37,8 +49,15 @@ class FSSClient:
     def __exit__(self, *exc_info: object) -> None:
         self.close()
 
-    def _request(self, path: str, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
-        """공통 파라미터(auth, topFinGrp, pageNo)를 붙여 GET 요청 후 JSON을 반환한다."""
+    def _request(
+        self,
+        path: str,
+        response_model: type[T],
+        top_fin_grp: str,
+        page_no: int = 1,
+        **extra_params: object,
+    ) -> T:
+        """공통 파라미터(auth, topFinGrp, pageNo)를 붙여 GET 요청 후 response_model로 검증해 반환한다."""
         url_path = path if path.endswith(".json") else f"{path}.json"
         params = {
             "auth": self._api_key,
@@ -52,32 +71,71 @@ class FSSClient:
         except httpx.HTTPError as exc:
             raise FSSAPIError(f"FSS API 요청 실패: {path} ({exc})") from exc
 
-        return response.json()
+        try:
+            return response_model.model_validate(response.json())
+        except ValidationError as exc:
+            raise FSSAPIError(f"FSS API 응답 검증 실패: {path} ({exc})") from exc
 
-    def search_companies(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_companies(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> CompanySearchResponse:
         """금융회사 목록 조회."""
-        return self._request("/finlifeapi/companySearch", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlifeapi/companySearch", CompanySearchResponse, top_fin_grp, page_no, **extra_params
+        )
 
-    def search_deposit_products(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_deposit_products(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> DepositSearchResponse:
         """정기예금 상품 조회."""
-        return self._request("/finlife/fdrmDpstApi/list", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlife/fdrmDpstApi/list", DepositSearchResponse, top_fin_grp, page_no, **extra_params
+        )
 
-    def search_saving_products(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_saving_products(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> SavingSearchResponse:
         """적금 상품 조회."""
-        return self._request("/finlifeapi/savingProductsSearch", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlifeapi/savingProductsSearch", SavingSearchResponse, top_fin_grp, page_no, **extra_params
+        )
 
-    def search_mortgage_loan_products(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_mortgage_loan_products(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> MortgageLoanSearchResponse:
         """주택담보대출 상품 조회."""
-        return self._request("/finlifeapi/mortgageLoanProductsSearch", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlifeapi/mortgageLoanProductsSearch",
+            MortgageLoanSearchResponse,
+            top_fin_grp,
+            page_no,
+            **extra_params,
+        )
 
-    def search_rent_house_loan_products(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_rent_house_loan_products(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> RentHouseLoanSearchResponse:
         """전세자금대출 상품 조회."""
-        return self._request("/finlifeapi/rentHouseLoanProductsSearch", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlifeapi/rentHouseLoanProductsSearch",
+            RentHouseLoanSearchResponse,
+            top_fin_grp,
+            page_no,
+            **extra_params,
+        )
 
-    def search_credit_loan_products(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_credit_loan_products(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> CreditLoanSearchResponse:
         """개인신용대출 상품 조회."""
-        return self._request("/finlifeapi/creditLoanProductsSearch", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlifeapi/creditLoanProductsSearch", CreditLoanSearchResponse, top_fin_grp, page_no, **extra_params
+        )
 
-    def search_business_loan_products(self, top_fin_grp: str, page_no: int = 1, **extra_params: object) -> dict:
+    def search_business_loan_products(
+        self, top_fin_grp: str, page_no: int = 1, **extra_params: object
+    ) -> BusinessLoanSearchResponse:
         """개인사업자대출 상품 조회."""
-        return self._request("/finlifeapi/busiLoanProductsSearch", top_fin_grp, page_no, **extra_params)
+        return self._request(
+            "/finlifeapi/busiLoanProductsSearch", BusinessLoanSearchResponse, top_fin_grp, page_no, **extra_params
+        )
