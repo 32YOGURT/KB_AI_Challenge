@@ -2,7 +2,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
-from app.models import Product, UserProfile
+from app.schemas import Product, UserProfile
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 

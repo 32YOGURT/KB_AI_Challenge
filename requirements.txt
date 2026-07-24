@@ -2,6 +2,9 @@
 fastapi
 uvicorn[standard]
 
+# HTTP client (FSS Open API)
+httpx
+
 # Embeddings
 openai
 

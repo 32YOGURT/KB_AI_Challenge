@@ -1,6 +1,6 @@
 import operator
 
-from app.models import CheckResponse, Product, ProductCondition, RiskBasis, UserProfile
+from app.schemas import CheckResponse, Product, ProductCondition, RiskBasis, UserProfile
 
 _OPERATORS = {
     "lt": operator.lt,

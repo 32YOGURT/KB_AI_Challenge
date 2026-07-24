@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from app.models import Product, ProductSummary, UserProfile
+from app.schemas import Product, ProductSummary, UserProfile
 from app.services.store import get_product, list_products, load_user_profiles
 
 router = APIRouter(prefix="/api", tags=["products"])
