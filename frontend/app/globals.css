@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #10182b;
+  --paper: #f0f2f7;
+  --panel: #ffffff;
+  --brand: #1d3a8f;
+  --brand-dark: #10265e;
+  --gold: #a9782d;
+  --gold-soft: #f6ecd9;
+  --line: #d7dbe3;
+  --muted: #5d6679;
+
+  --risk-red: #c22a2a;
+  --risk-red-soft: #fbebeb;
+  --risk-yellow: #b5710a;
+  --risk-yellow-soft: #fdf3e2;
+  --risk-green: #0f7a4d;
+  --risk-green-soft: #e8f5ee;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+
+  --color-risk-red: var(--risk-red);
+  --color-risk-red-soft: var(--risk-red-soft);
+  --color-risk-yellow: var(--risk-yellow);
+  --color-risk-yellow-soft: var(--risk-yellow-soft);
+  --color-risk-green: var(--risk-green);
+  --color-risk-green-soft: var(--risk-green-soft);
+
+  --font-body: var(--font-portal);
+  --font-display: var(--font-verdict);
+  --font-data: var(--font-utility);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-portal), "Malgun Gothic", sans-serif;
+}
+
+@keyframes scan-sweep {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(600%);
+  }
+}
+
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) rotate(-1deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.015) rotate(0.3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-scan-sweep {
+  animation: scan-sweep 1.6s ease-in-out infinite;
+}
+
+.animate-stamp-in {
+  animation: stamp-in 0.42s cubic-bezier(0.2, 0.8, 0.3, 1.1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-sweep,
+  .animate-stamp-in,
+  .animate-fade-in {
+    animation: none !important;
+  }
+}

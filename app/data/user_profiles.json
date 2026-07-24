@@ -1,0 +1,18 @@
+[
+  {
+    "id": "user_a",
+    "display_name": "유저 A",
+    "monthly_income": 2200000,
+    "emergency_fund": 300000,
+    "monthly_transit_count": 18,
+    "monthly_taxi_count": 2
+  },
+  {
+    "id": "user_b",
+    "display_name": "유저 B",
+    "monthly_income": 2800000,
+    "emergency_fund": 5000000,
+    "monthly_transit_count": 0,
+    "monthly_taxi_count": 20
+  }
+]

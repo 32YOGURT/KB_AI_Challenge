@@ -1,5 +1,6 @@
 # Web framework
 fastapi
+uvicorn[standard]
 
 # Embeddings
 openai
