@@ -1,0 +1,92 @@
+"""RAG로 검색된 조항 + 유저 데이터를 결합해 gpt-4o-mini에 구조화된 위험성 판정을 요청한다."""
+
+import json
+
+from app.clients.openai_client import get_client
+from app.schemas import ClauseChunk, Product, UserProfile
+
+LLM_MODEL = "gpt-4o-mini"
+
+_RISK_REPORT_SCHEMA = {
+    "name": "risk_report",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "risk_level": {"type": "string", "enum": ["RED", "YELLOW", "GREEN"]},
+            "headline": {"type": "string", "description": "한 줄 핵심 경고 문구"},
+            "summary_lines": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "정확히 3줄로 구성된 위험성 팩트체크 리포트",
+            },
+            "basis": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "clause": {"type": "string"},
+                        "source": {"type": "string"},
+                    },
+                    "required": ["clause", "source"],
+                    "additionalProperties": False,
+                },
+                "description": "판단 근거가 된 약관 조항. 제공된 컨텍스트에 실제로 존재하는 조항만 인용하며, 근거가 없으면 빈 배열.",
+            },
+        },
+        "required": ["risk_level", "headline", "summary_lines", "basis"],
+        "additionalProperties": False,
+    },
+}
+
+_SYSTEM_PROMPT = """당신은 'Fin-Guard AI'로, 금융 상품 가입 직전 소비자를 보호하는 위험성 팩트체크 엔진입니다.
+주어진 [약관 조항]과 [유저 소비/자산 데이터]만 근거로 삼아, 이 유저가 이 상품에 가입할 때 놓치기 쉬운 위험을 판단하세요.
+
+규칙:
+1. 반드시 risk_report JSON 스키마에 맞춰서만 응답한다. 다른 텍스트는 출력하지 않는다.
+2. basis에 인용하는 조항은 반드시 제공된 [약관 조항] 컨텍스트에 실제로 존재하는 내용만 사용한다. 컨텍스트에 없는 조항을 지어내거나 추측하지 않는다.
+3. 컨텍스트에서 근거 조항을 찾을 수 없으면 basis는 빈 배열로 두고, risk_level은 GREEN으로 판단한다.
+4. summary_lines는 정확히 3줄, 사회 초년생도 바로 이해할 수 있는 쉬운 문장으로 작성한다.
+5. risk_level 기준: RED는 중도해지 페널티/원금 손실 등 심각한 금전적 손해, YELLOW는 우대조건 미달 등 기대보다 낮은 혜택, GREEN은 특이 위험 없음.
+"""
+
+
+def _format_clauses(clauses: list[ClauseChunk]) -> str:
+    if not clauses:
+        return "(검색된 약관 조항 없음)"
+    return "\n\n".join(
+        f"[출처: {c.source}{f' {c.page}p' if c.page else ''}] {c.clause_title}\n{c.text}"
+        for c in clauses
+    )
+
+
+def _format_user(user: UserProfile) -> str:
+    return (
+        f"- 월 소득: {user.monthly_income:,.0f}원\n"
+        f"- 비상금(즉시 가용 자산): {user.emergency_fund:,.0f}원\n"
+        f"- 최근 월평균 대중교통 이용: {user.monthly_transit_count}회\n"
+        f"- 최근 월평균 택시 이용: {user.monthly_taxi_count}회"
+    )
+
+
+def infer_risk_report(product: Product, user: UserProfile, clauses: list[ClauseChunk]) -> dict:
+    """약관 조항 + 유저 데이터를 결합해 LLM에 위험성 판정을 요청하고, 파싱된 JSON을 반환한다."""
+    user_prompt = (
+        f"[상품 정보]\n{product.bank} {product.name} ({product.category})\n"
+        f"기본금리 {product.base_rate}% / 최대우대금리 {product.max_preferential_rate}% "
+        f"/ 최소가입기간 {product.min_period_months}개월\n"
+        f"{product.description}\n\n"
+        f"[유저 소비/자산 데이터]\n{_format_user(user)}\n\n"
+        f"[약관 조항 (RAG 검색 결과)]\n{_format_clauses(clauses)}"
+    )
+
+    response = get_client().chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        response_format={"type": "json_schema", "json_schema": _RISK_REPORT_SCHEMA},
+    )
+
+    return json.loads(response.choices[0].message.content)
