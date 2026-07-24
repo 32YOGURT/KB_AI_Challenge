@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, List
 
 from pydantic import BaseModel
 
@@ -21,7 +21,7 @@ class BaseListItem(BaseModel):
     loan_limit: str
     loan_limit_detl: str
     join_deny: str
-    join_deny_detl: str
+    join_deny_detl: str | None = None
     spcl_rate: Any
     loan_term: str
     erly_rpay_fee: str
@@ -36,47 +36,47 @@ class OptionListItem(BaseModel):
     dcls_month: str
     fin_co_no: str
     fin_prdt_cd: str
-    val1_grad_1: float
-    val1_grad_2: float
-    val1_grad_3: float
-    val1_grad_4: float
-    val1_grad_5: int
-    val1_grad_6: int
-    val1_grad_7: int
-    val1_grad_8: int
-    val1_grad_avg: float
-    val2_grad_1: float
-    val2_grad_2: float
-    val2_grad_3: float
-    val2_grad_4: float
-    val2_grad_5: int
-    val2_grad_6: int
-    val2_grad_7: int
-    val2_grad_8: int
-    val2_grad_avg: float
-    val3_grad_1: float
-    val3_grad_2: float
-    val3_grad_3: float
-    val3_grad_4: float
-    val3_grad_5: int
-    val3_grad_6: int
-    val3_grad_7: int
-    val3_grad_8: int
-    val3_grad_avg: float
+    val1_grad_1: float | None = None
+    val1_grad_2: float | None = None
+    val1_grad_3: float | None = None
+    val1_grad_4: float | None = None
+    val1_grad_5: float | None = None
+    val1_grad_6: float | None = None
+    val1_grad_7: float | None = None
+    val1_grad_8: float | None = None
+    val1_grad_avg: float | None = None
+    val2_grad_1: float | None = None
+    val2_grad_2: float | None = None
+    val2_grad_3: float | None = None
+    val2_grad_4: float | None = None
+    val2_grad_5: float | None = None
+    val2_grad_6: float | None = None
+    val2_grad_7: float | None = None
+    val2_grad_8: float | None = None
+    val2_grad_avg: float | None = None
+    val3_grad_1: float | None = None
+    val3_grad_2: float | None = None
+    val3_grad_3: float | None = None
+    val3_grad_4: float | None = None
+    val3_grad_5: float | None = None
+    val3_grad_6: float | None = None
+    val3_grad_7: float | None = None
+    val3_grad_8: float | None = None
+    val3_grad_avg: float | None = None
     lend_rate_min: float
     lend_rate_max: float
-    lend_rate_avg: float
+    lend_rate_avg: float | None = None
 
 
 class Result(BaseModel):
-    prdt_div: str
+    prdt_div: str | None = None
     total_count: int
-    max_page_no: int
-    now_page_no: int
+    max_page_no: int | None = None
+    now_page_no: int | None = None
     err_cd: str
     err_msg: str
-    baseList: List[BaseListItem]
-    optionList: List[OptionListItem]
+    baseList: List[BaseListItem] = []
+    optionList: List[OptionListItem] = []
 
 
 class Model(BaseModel):

@@ -37,14 +37,14 @@ class OptionListItem(BaseModel):
 
 
 class Result(BaseModel):
-    prdt_div: str
-    total_count: str
-    max_page_no: str
-    now_page_no: str
+    prdt_div: str | None = None
+    total_count: int
+    max_page_no: int | None = None
+    now_page_no: int | None = None
     err_cd: str
     err_msg: str
-    baseList: List[BaseListItem]
-    optionList: List[OptionListItem]
+    baseList: List[BaseListItem] = []
+    optionList: List[OptionListItem] = []
 
 
 class Model(BaseModel):

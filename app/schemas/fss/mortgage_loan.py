@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, List
 
 from pydantic import BaseModel
 
@@ -31,18 +31,18 @@ class OptionListItem(BaseModel):
     lend_rate_type_nm: str
     lend_rate_min: float
     lend_rate_max: float
-    lend_rate_avg: float
+    lend_rate_avg: float | None = None
 
 
 class Result(BaseModel):
-    prdt_div: str
-    total_count: str
-    max_page_no: str
-    now_page_no: str
+    prdt_div: str | None = None
+    total_count: int
+    max_page_no: int | None = None
+    now_page_no: int | None = None
     err_cd: str
     err_msg: str
-    baseList: List[BaseListItem]
-    optionList: List[OptionListItem]
+    baseList: List[BaseListItem] = []
+    optionList: List[OptionListItem] = []
 
 
 class Model(BaseModel):
