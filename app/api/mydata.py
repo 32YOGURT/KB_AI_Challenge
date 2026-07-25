@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-from app.clients.mydata_auth_client import MyDataAuthError, issue_token, resolve_user_id
-from app.clients.mydata_client import MyDataClient, MyDataError
+from app.clients.mydata.auth import MyDataAuthError, issue_token, resolve_user_id
+from app.clients.mydata.client import MyDataClient, MyDataError
 from app.schemas import TokenRequest, TokenResponse, UserProfile
 
 router = APIRouter(prefix="/api/mydata", tags=["mydata"])
