@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 
 from app.clients.mydata.auth import MyDataAuthError, issue_token, resolve_user_id
 from app.clients.mydata.client import MyDataClient, MyDataError
-from app.schemas import TokenRequest, TokenResponse, UserProfile
+from app.schemas import AssetDistributionSignal, LiquiditySignal, TokenRequest, TokenResponse, UserProfile
+from app.services.mydata.asset_distribution import get_asset_distribution_signal
+from app.services.mydata.liquidity import get_liquidity_signal
 
 router = APIRouter(prefix="/api/mydata", tags=["mydata"])
 
@@ -32,5 +34,23 @@ def get_my_profile(user_id: str = Depends(get_current_user_id)) -> UserProfile:
     try:
         with MyDataClient() as client:
             return client.get_user_profile(user_id)
+    except MyDataError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/liquidity", response_model=LiquiditySignal)
+def get_my_liquidity(user_id: str = Depends(get_current_user_id)) -> LiquiditySignal:
+    """확인용: 현금흐름 & 유동성 집계 신호."""
+    try:
+        return get_liquidity_signal(user_id)
+    except MyDataError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/asset-distribution", response_model=AssetDistributionSignal)
+def get_my_asset_distribution(user_id: str = Depends(get_current_user_id)) -> AssetDistributionSignal:
+    """확인용: 금융사별 자산 분포 & 만기 집계 신호."""
+    try:
+        return get_asset_distribution_signal(user_id)
     except MyDataError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
