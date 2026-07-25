@@ -1,7 +1,7 @@
 from app.schemas import CheckResponse, Product, RiskBasis, UserProfile
-from app.services.llm_inference import infer_risk_report
-from app.services.query_builder import build_search_query
-from app.services.rag import search_clauses
+from app.services.rag.llm_inference import infer_risk_report
+from app.services.rag.query_builder import build_search_query
+from app.services.rag.retrieval import search_clauses
 
 
 def generate_risk_report(product: Product, user: UserProfile) -> CheckResponse:
