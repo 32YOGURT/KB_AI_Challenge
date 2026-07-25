@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from app.schemas import CheckRequest, CheckResponse
-from app.services.risk_engine import generate_risk_report
+from app.services.rag_pipeline import generate_risk_report
 from app.services.store import get_product, get_user_profile
 
 router = APIRouter(prefix="/api", tags=["check"])
