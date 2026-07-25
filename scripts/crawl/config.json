@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "적금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022182"
+  }
+]
