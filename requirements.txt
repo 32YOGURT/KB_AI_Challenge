@@ -16,3 +16,6 @@ pdfplumber
 
 # Config
 python-dotenv
+
+# Crawling (상품설명서/약관 PDF 다운로드)
+playwright
