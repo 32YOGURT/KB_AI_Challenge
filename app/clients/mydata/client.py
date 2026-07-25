@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from app.schemas import UserProfile
 from app.schemas.mydata.bank_accounts import AccountItem, AccountListResponse
 from app.schemas.mydata.bank_accounts_deposit_basic import AccountBasicItem, AccountBasicResponse
 from app.schemas.mydata.bank_accounts_deposit_detail import AccountDetailItem, AccountDetailResponse
@@ -25,8 +24,12 @@ from app.schemas.mydata.bank_accounts_deposit_transactions import (
 )
 from app.schemas.mydata.card_cards import CardItem, CardListResponse
 from app.schemas.mydata.card_cards_approval_domestic import CardApprovalItem, CardApprovalResponse
-from app.services.store import get_mydata_institution_section, get_mydata_section, list_mydata_institutions
-from app.services.store import get_user_profile as _load_user_profile
+from app.services.store import (
+    get_mydata_institution_section,
+    get_mydata_section,
+    list_mydata_institutions,
+    mydata_user_exists,
+)
 
 
 class MyDataError(Exception):
@@ -47,25 +50,19 @@ class MyDataClient:
     def __exit__(self, *exc_info: object) -> None:
         pass
 
-    def _require_profile(self, user_id: str) -> UserProfile:
-        profile = _load_user_profile(user_id)
-        if profile is None:
+    def _require_user(self, user_id: str) -> None:
+        if not mydata_user_exists(user_id):
             raise MyDataError(f"등록되지 않은 user_id: {user_id!r}")
-        return profile
-
-    def get_user_profile(self, user_id: str) -> UserProfile:
-        """user_id의 마이데이터 기반 유저 프로필을 반환한다 (목업: 로컬 mock 데이터)."""
-        return self._require_profile(user_id)
 
     def list_institutions(self, user_id: str) -> list[str]:
         """정보제공-공통-002(전송요구 내역 조회)에 대응: user_id가 마이데이터를
         연동(전송요구)한 금융회사(org_code) 목록을 반환한다."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         return list_mydata_institutions(user_id)
 
     def get_bank_accounts(self, user_id: str, org_code: str) -> AccountListResponse:
         """은행-001: 계좌 목록 조회 (기관별 호출)."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         items = [
             AccountItem(**raw) for raw in get_mydata_institution_section(user_id, org_code, "accounts")
         ]
@@ -80,7 +77,7 @@ class MyDataClient:
 
     def get_bank_account_basic(self, user_id: str, org_code: str) -> AccountBasicResponse:
         """은행-002: 수신계좌 기본정보 조회 (기관별 호출)."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         items = [
             AccountBasicItem(**raw)
             for raw in get_mydata_institution_section(user_id, org_code, "account_basic")
@@ -95,7 +92,7 @@ class MyDataClient:
 
     def get_bank_account_detail(self, user_id: str, org_code: str) -> AccountDetailResponse:
         """은행-003: 수신계좌 추가정보 조회 (기관별 호출)."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         items = [
             AccountDetailItem(**raw)
             for raw in get_mydata_institution_section(user_id, org_code, "account_detail")
@@ -110,7 +107,7 @@ class MyDataClient:
 
     def get_bank_account_transactions(self, user_id: str, org_code: str) -> AccountTransactionResponse:
         """은행-004: 수신계좌 거래내역 조회 (기관별 호출)."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         items = [
             AccountTransactionItem(**raw)
             for raw in get_mydata_institution_section(user_id, org_code, "account_transactions")
@@ -124,7 +121,7 @@ class MyDataClient:
 
     def get_cards(self, user_id: str) -> CardListResponse:
         """카드-001: 카드 목록 조회."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         items = [CardItem(**raw) for raw in get_mydata_section(user_id, "cards")]
         return CardListResponse(
             rsp_code="000",
@@ -136,7 +133,7 @@ class MyDataClient:
 
     def get_card_approvals(self, user_id: str) -> CardApprovalResponse:
         """카드-008: 국내 승인내역 조회."""
-        self._require_profile(user_id)
+        self._require_user(user_id)
         items = [
             CardApprovalItem(**raw) for raw in get_mydata_section(user_id, "card_approvals")
         ]

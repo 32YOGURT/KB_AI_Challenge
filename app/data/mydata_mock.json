@@ -1,5 +1,6 @@
 {
   "user_c": {
+    "display_name": "유저 C",
     "institutions": {
       "KB국민은행": {
         "accounts": [
@@ -100,6 +101,7 @@
     ]
   },
   "user_d": {
+    "display_name": "유저 D",
     "institutions": {},
     "cards": [
       {

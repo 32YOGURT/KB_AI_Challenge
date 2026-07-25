@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from app.clients.mydata.auth import MyDataAuthError, issue_token, resolve_user_id
-from app.clients.mydata.client import MyDataClient, MyDataError
-from app.schemas import AssetDistributionSignal, LiquiditySignal, TokenRequest, TokenResponse, UserProfile
+from app.clients.mydata.client import MyDataError
+from app.schemas import AssetDistributionSignal, LiquiditySignal, TokenRequest, TokenResponse, UserSignals
 from app.services.mydata.asset_distribution import get_asset_distribution_signal
 from app.services.mydata.liquidity import get_liquidity_signal
+from app.services.mydata.user_signals import get_user_signals
 
 router = APIRouter(prefix="/api/mydata", tags=["mydata"])
 
@@ -29,11 +30,11 @@ def get_current_user_id(authorization: str = Header(...)) -> str:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
-@router.get("/me", response_model=UserProfile)
-def get_my_profile(user_id: str = Depends(get_current_user_id)) -> UserProfile:
+@router.get("/me", response_model=UserSignals)
+def get_my_signals(user_id: str = Depends(get_current_user_id)) -> UserSignals:
+    """확인용: 유동성 + 자산분포를 한 번에 묶은 전체 신호."""
     try:
-        with MyDataClient() as client:
-            return client.get_user_profile(user_id)
+        return get_user_signals(user_id)
     except MyDataError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 

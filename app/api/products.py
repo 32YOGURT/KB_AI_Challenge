@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas import Product, ProductSummary, UserProfile
-from app.services.store import get_product, list_products, load_user_profiles
+from app.schemas import Product, ProductSummary, UserSummary
+from app.services.store import get_product, list_mydata_users, list_products
 
 router = APIRouter(prefix="/api", tags=["products"])
 
@@ -29,6 +29,6 @@ def get_product_detail(product_id: str) -> Product:
     return product
 
 
-@router.get("/users", response_model=list[UserProfile])
-def get_users() -> list[UserProfile]:
-    return list(load_user_profiles().values())
+@router.get("/users", response_model=list[UserSummary])
+def get_users() -> list[UserSummary]:
+    return list_mydata_users()

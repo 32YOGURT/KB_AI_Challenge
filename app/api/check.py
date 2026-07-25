@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.schemas import CheckRequest, CheckResponse
 from app.services.rag.pipeline import generate_risk_report
-from app.services.store import get_product, get_user_profile
+from app.services.store import get_product, mydata_user_exists
 
 router = APIRouter(prefix="/api", tags=["check"])
 
@@ -13,8 +13,7 @@ def check_product(payload: CheckRequest) -> CheckResponse:
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    user = get_user_profile(payload.user_id)
-    if user is None:
+    if not mydata_user_exists(payload.user_id):
         raise HTTPException(status_code=404, detail="User not found")
 
-    return generate_risk_report(product, user)
+    return generate_risk_report(product, payload.user_id)

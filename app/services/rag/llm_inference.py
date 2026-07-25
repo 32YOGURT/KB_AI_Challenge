@@ -3,7 +3,7 @@
 import json
 
 from app.clients.openai_client import get_client
-from app.schemas import ClauseChunk, Product, UserProfile
+from app.schemas import ClauseChunk, Product, UserSignals
 
 LLM_MODEL = "gpt-4o-mini"
 
@@ -60,23 +60,38 @@ def _format_clauses(clauses: list[ClauseChunk]) -> str:
     )
 
 
-def _format_user(user: UserProfile) -> str:
+def _format_signals(signals: UserSignals) -> str:
+    liquidity = signals.liquidity
+    dist = signals.asset_distribution
+
+    institutions = "\n".join(
+        f"  - {inst.org_code}: 잔액 {inst.total_balance:,.0f}원"
+        + ("(예금자보호 한도 초과)" if inst.is_over_protection_limit else "")
+        for inst in dist.by_institution
+    ) or "  - 연동된 예금/적금 상품 없음"
+
+    maturities = "\n".join(
+        f"  - {m.org_code} {m.prod_name}: 만기 {m.exp_date}" for m in dist.upcoming_maturities
+    ) or "  - 없음"
+
     return (
-        f"- 월 소득: {user.monthly_income:,.0f}원\n"
-        f"- 비상금(즉시 가용 자산): {user.emergency_fund:,.0f}원\n"
-        f"- 최근 월평균 대중교통 이용: {user.monthly_transit_count}회\n"
-        f"- 최근 월평균 택시 이용: {user.monthly_taxi_count}회"
+        f"- 총 잔액(유동자산): {liquidity.balance_amt:,.0f}원 "
+        f"(출금가능액 {liquidity.withdrawable_amt:,.0f}원)\n"
+        f"- 최근 순현금흐름: {liquidity.recent_net_cash_flow:,.0f}원 "
+        f"(최근 거래 {liquidity.transaction_count}건)\n"
+        f"- 금융사별 자산 분포:\n{institutions}\n"
+        f"- 만기 예정 상품:\n{maturities}"
     )
 
 
-def infer_risk_report(product: Product, user: UserProfile, clauses: list[ClauseChunk]) -> dict:
-    """약관 조항 + 유저 데이터를 결합해 LLM에 위험성 판정을 요청하고, 파싱된 JSON을 반환한다."""
+def infer_risk_report(product: Product, signals: UserSignals, clauses: list[ClauseChunk]) -> dict:
+    """약관 조항 + 유저 마이데이터 신호를 결합해 LLM에 위험성 판정을 요청하고, 파싱된 JSON을 반환한다."""
     user_prompt = (
         f"[상품 정보]\n{product.bank} {product.name} ({product.category})\n"
         f"기본금리 {product.base_rate}% / 최대우대금리 {product.max_preferential_rate}% "
         f"/ 최소가입기간 {product.min_period_months}개월\n"
         f"{product.description}\n\n"
-        f"[유저 소비/자산 데이터]\n{_format_user(user)}\n\n"
+        f"[유저 소비/자산 데이터]\n{_format_signals(signals)}\n\n"
         f"[약관 조항 (RAG 검색 결과)]\n{_format_clauses(clauses)}"
     )
 
