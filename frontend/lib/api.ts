@@ -1,12 +1,18 @@
 import type {
   CheckResponse,
   NormalizedBusinessLoan,
+  NormalizedBusinessLoanDetail,
   NormalizedCompany,
   NormalizedCreditLoan,
+  NormalizedCreditLoanDetail,
   NormalizedDeposit,
+  NormalizedDepositDetail,
   NormalizedMortgageLoan,
+  NormalizedMortgageLoanDetail,
   NormalizedRentHouseLoan,
+  NormalizedRentHouseLoanDetail,
   NormalizedSaving,
+  NormalizedSavingDetail,
   UserProfile,
 } from "./types";
 
@@ -61,4 +67,49 @@ export function fetchBusinessLoans(): Promise<NormalizedBusinessLoan[]> {
 
 export function fetchCompanies(): Promise<NormalizedCompany[]> {
   return request<NormalizedCompany[]>("/api/products/companies");
+}
+
+export function fetchDepositDetail(finCoNo: string, finPrdtCd: string): Promise<NormalizedDepositDetail> {
+  return request<NormalizedDepositDetail>(
+    `/api/products/deposits/${encodeURIComponent(finCoNo)}/${encodeURIComponent(finPrdtCd)}`,
+  );
+}
+
+export function fetchSavingDetail(finCoNo: string, finPrdtCd: string): Promise<NormalizedSavingDetail> {
+  return request<NormalizedSavingDetail>(
+    `/api/products/savings/${encodeURIComponent(finCoNo)}/${encodeURIComponent(finPrdtCd)}`,
+  );
+}
+
+export function fetchMortgageLoanDetail(
+  finCoNo: string,
+  finPrdtCd: string,
+): Promise<NormalizedMortgageLoanDetail> {
+  return request<NormalizedMortgageLoanDetail>(
+    `/api/products/mortgage-loans/${encodeURIComponent(finCoNo)}/${encodeURIComponent(finPrdtCd)}`,
+  );
+}
+
+export function fetchRentHouseLoanDetail(
+  finCoNo: string,
+  finPrdtCd: string,
+): Promise<NormalizedRentHouseLoanDetail> {
+  return request<NormalizedRentHouseLoanDetail>(
+    `/api/products/rent-house-loans/${encodeURIComponent(finCoNo)}/${encodeURIComponent(finPrdtCd)}`,
+  );
+}
+
+export function fetchCreditLoanDetail(finCoNo: string, finPrdtCd: string): Promise<NormalizedCreditLoanDetail> {
+  return request<NormalizedCreditLoanDetail>(
+    `/api/products/credit-loans/${encodeURIComponent(finCoNo)}/${encodeURIComponent(finPrdtCd)}`,
+  );
+}
+
+export function fetchBusinessLoanDetail(
+  finCoNo: string,
+  finPrdtCd: string,
+): Promise<NormalizedBusinessLoanDetail> {
+  return request<NormalizedBusinessLoanDetail>(
+    `/api/products/business-loans/${encodeURIComponent(finCoNo)}/${encodeURIComponent(finPrdtCd)}`,
+  );
 }

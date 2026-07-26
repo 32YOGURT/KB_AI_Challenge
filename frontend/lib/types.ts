@@ -37,6 +37,30 @@ export interface NormalizedSaving extends NormalizedDeposit {
   reserve_types: string[];
 }
 
+export interface DepositRateOption {
+  term_months: number | null;
+  base_rate: number | null;
+  preferential_rate: number | null;
+}
+
+export interface NormalizedDepositDetail extends NormalizedDeposit {
+  mtrt_int: string;
+  spcl_cnd: string;
+  join_deny: string;
+  join_member: string;
+  etc_note: string;
+  rate_options: DepositRateOption[];
+}
+
+export interface NormalizedSavingDetail extends NormalizedSaving {
+  mtrt_int: string;
+  spcl_cnd: string;
+  join_deny: string;
+  join_member: string;
+  etc_note: string;
+  rate_options: DepositRateOption[];
+}
+
 export interface NormalizedMortgageLoan {
   fin_co_no: string;
   fin_prdt_cd: string;
@@ -53,6 +77,26 @@ export interface NormalizedMortgageLoan {
 
 export type NormalizedRentHouseLoan = NormalizedMortgageLoan;
 
+export interface LoanRateOption {
+  repay_type_nm: string;
+  lend_rate_type_nm: string;
+  lend_rate_min: number;
+  lend_rate_max: number;
+  lend_rate_avg: number | null;
+}
+
+export interface NormalizedMortgageLoanDetail extends NormalizedMortgageLoan {
+  loan_inci_expn: string;
+  dly_rate: string;
+  rate_options: LoanRateOption[];
+}
+
+export interface NormalizedRentHouseLoanDetail extends NormalizedRentHouseLoan {
+  loan_inci_expn: string;
+  dly_rate: string;
+  rate_options: LoanRateOption[];
+}
+
 export interface NormalizedCreditLoan {
   fin_co_no: string;
   fin_prdt_cd: string;
@@ -63,6 +107,16 @@ export interface NormalizedCreditLoan {
   best_grade_rate: number | null;
   worst_grade_rate: number | null;
   avg_rate: number | null;
+}
+
+export interface CreditGradeRate {
+  field: string;
+  rate: number;
+}
+
+export interface NormalizedCreditLoanDetail extends NormalizedCreditLoan {
+  crdt_lend_rate_type_nm: string;
+  grade_rates: CreditGradeRate[];
 }
 
 export interface NormalizedBusinessLoan {
@@ -76,6 +130,17 @@ export interface NormalizedBusinessLoan {
   min_rate: number | null;
   max_rate: number | null;
   avg_rate: number | null;
+}
+
+export interface NormalizedBusinessLoanDetail extends NormalizedBusinessLoan {
+  fin_prdt_type_nm: string;
+  loan_type: string;
+  loan_limit_detl: string;
+  join_deny_detl: string | null;
+  loan_term: string;
+  early_repay_fee: string;
+  loan_inci_expn: string;
+  dly_rate: string;
 }
 
 export interface NormalizedCompany {

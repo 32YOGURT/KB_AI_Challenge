@@ -14,6 +14,7 @@ export default async function DepositsPage() {
         <RateProductList
           rows={deposits.map((p) => ({
             key: `${p.fin_co_no}-${p.fin_prdt_cd}`,
+            href: `/deposits/${encodeURIComponent(p.fin_co_no)}/${encodeURIComponent(p.fin_prdt_cd)}`,
             bank: p.bank_name,
             name: p.product_name,
             note: p.join_way,
