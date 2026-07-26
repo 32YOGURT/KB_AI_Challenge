@@ -31,10 +31,6 @@ export interface Product extends ProductSummary {
 export interface UserProfile {
   id: string;
   display_name: string;
-  monthly_income: number;
-  emergency_fund: number;
-  monthly_transit_count: number;
-  monthly_taxi_count: number;
 }
 
 export interface RiskBasis {
