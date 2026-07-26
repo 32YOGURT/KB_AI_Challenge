@@ -1,0 +1,90 @@
+[
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "적금",
+    "sub_category": "목돈모으기상품",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022182"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "적금",
+    "sub_category": "법인용예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C062182"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "적금",
+    "sub_category": "외화적금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C106582"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "예금",
+    "sub_category": "목돈굴리기상품",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022185"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "예금",
+    "sub_category": "시장성예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022187"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "예금",
+    "sub_category": "외화정기예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022188"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "예금",
+    "sub_category": "퇴직연금정기예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C056666"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "예금",
+    "sub_category": "법인용예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C062180"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "입출금자유예금",
+    "sub_category": "입출금이자유로운예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022190"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "입출금자유예금",
+    "sub_category": "외화예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C022191"
+  },
+  {
+    "company": "KB국민은행",
+    "doc_type": "TODO",
+    "category": "입출금자유예금",
+    "sub_category": "법인용예금",
+    "adapter": "kb",
+    "url": "https://obank.kbstar.com/quics?page=C062181"
+  }
+]

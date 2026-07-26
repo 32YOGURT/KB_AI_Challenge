@@ -1,8 +1,11 @@
 """Playwright 공통 드라이버.
 
-config.json의 항목(company, doc_type, category, url)마다 URL 도메인에 맞는
-adapter(scripts/crawl/adapters/)를 찾아 목록 페이지를 열고, adapter가 찾아낸
-문서 항목마다 실제 PDF 바이트를 받아와 저장한다.
+config/{은행}.json (은행별 카테고리 목록) 하나하나의 항목(company, doc_type,
+category, url)마다 URL 도메인에 맞는 adapter(scripts/crawl/adapters/)를 찾아
+목록 페이지를 열고, adapter가 찾아낸 문서 항목마다 실제 PDF 바이트를 받아와 저장한다.
+
+어떤 은행을 크롤링할지는 이 파일의 BANKS 리스트가 정한다 (config/ 밑에 파일이
+있어도 BANKS에 없으면 안 돈다 — 특정 은행만 테스트하고 싶을 때 리스트에서 빼면 됨).
 
 은행마다 PDF를 실제로 받아오는 방식이 다르다 (KB: 클릭 → 브라우저 다운로드 이벤트,
 신한: 클릭 → AJAX 응답 안의 PDF URL을 HTTP로 GET). 그래서 어댑터는 "이 항목의 PDF
@@ -24,6 +27,11 @@ from typing import Callable, Iterator, Protocol
 from playwright.sync_api import Page, sync_playwright
 
 from . import manifest
+
+CONFIG_DIR = Path(__file__).resolve().parent / "config"
+
+# 크롤링할 은행 목록 (파일명은 config/{bank}.json). 순서대로 처리된다.
+BANKS = ["kb", "shinhan", "hana"]
 
 
 @dataclass
@@ -80,7 +88,7 @@ def _save_bytes(content: bytes, company: str, category: str, raw_title: str) -> 
 
 
 def crawl_entry(entry: dict, page: Page) -> None:
-    """config.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다."""
+    """config/{은행}.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다."""
     adapter = _adapter_for(entry["adapter"])
     page.goto(entry["url"])
 
@@ -110,8 +118,16 @@ def crawl_entry(entry: dict, page: Page) -> None:
         )
 
 
-def run(config_path: Path, headless: bool = True) -> None:
-    entries = json.loads(config_path.read_text(encoding="utf-8"))
+def _load_entries() -> list[dict]:
+    entries: list[dict] = []
+    for bank in BANKS:
+        config_path = CONFIG_DIR / f"{bank}.json"
+        entries.extend(json.loads(config_path.read_text(encoding="utf-8")))
+    return entries
+
+
+def run(headless: bool = True) -> None:
+    entries = _load_entries()
     with sync_playwright() as p:
         for entry in entries:
             # entry(카테고리)마다 브라우저 자체를 새로 띄운다. page만 새로 만드는 걸로는
