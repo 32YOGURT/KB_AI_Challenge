@@ -13,9 +13,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Iterator
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
 from ..base import ItemTrigger
 
@@ -39,8 +40,12 @@ def _resolve_doc_type(link_text: str) -> str | None:
             return doc_type
     return None
 
-ROW_SELECTOR = "#b054049 > div.n_pcontZn > form > div.n_prodList > table.tType01 > tbody > tr"  # TODO: 실제 테이블 selector로 교체
-PRODUCT_NAME_SELECTOR = "th.th01 a"  # TODO: 실제 selector로 교체
+# 카테고리 페이지마다 목록 바로 위 컨테이너 id(예: #b054049)가 달라서, 그 대신
+# 고정된 div#CP 밑에서 div만 세었을 때 3번째 자식으로 잡는다 (구조는 페이지마다 공통).
+ROW_SELECTOR = "div.contentWrap > div#CP > div:nth-of-type(3) > div.n_pcontZn > form > div.n_prodList > table.tType01 > tbody > tr"
+# 상품명은 클릭 대상이 아니라 텍스트만 읽으면 되므로 a로 좁히지 않는다.
+# (외화 계열처럼 th.th01 안에 <a> 없이 텍스트만 있는 페이지도 있음)
+PRODUCT_NAME_SELECTOR = "th.th01"
 DOC_LINK_SELECTOR = "td.tLeft a"  # TODO: 실제 selector로 교체
 # 페이지 번호가 <a>가 아니라 폼별 제출 버튼으로 되어 있음:
 #   <form onsubmit="return goPage(N);">
@@ -51,15 +56,25 @@ DOC_LINK_SELECTOR = "td.tLeft a"  # TODO: 실제 selector로 교체
 PAGE_NUMBER_SELECTOR = "div.paging input[type=submit]"
 
 
-def _click_link(page: Page, link_locator) -> None:
-    """href="#none" + onclick으로 다운로드가 트리거되는 것으로 보임.
-    실제 onclick 핸들러(함수명/파라미터)를 확인한 뒤 구현해야 한다."""
-    link_locator.click()
+def _fetch(page: Page, link_locator) -> bytes | None:
+    """클릭하면 브라우저 다운로드 이벤트가 뜨는 방식. 안 뜨면(문서 링크가 아니었음) None."""
+    try:
+        with page.expect_download(timeout=5000) as download_info:
+            link_locator.click()
+    except PlaywrightTimeoutError:
+        return None
+    download = download_info.value
+    return Path(download.path()).read_bytes()
 
 
 def _find_page_link(page: Page, page_number: int):
-    """페이지 번호 제출 버튼들 중 value가 page_number와 일치하는 것을 찾는다. 없으면 None."""
-    for button in page.locator(PAGE_NUMBER_SELECTOR).all():
+    """페이지 번호 제출 버튼들 중 value가 page_number와 일치하는 것을 찾는다.
+    페이지네이션 자체가 없는 페이지(외화 계열 등, 상품 수가 적어 페이지가 하나뿐인 경우)에서는
+    PAGE_NUMBER_SELECTOR가 아무것도 안 잡히므로 자연히 None."""
+    buttons = page.locator(PAGE_NUMBER_SELECTOR).all()
+    if not buttons:
+        return None
+    for button in buttons:
         if button.get_attribute("value") == str(page_number):
             return button
     return None
@@ -70,18 +85,22 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
     while True:
         rows = page.locator(ROW_SELECTOR).all()
         for row in rows:
-            product_name = row.locator(PRODUCT_NAME_SELECTOR).inner_text().strip()
+            try:
+                product_name = row.locator(PRODUCT_NAME_SELECTOR).inner_text(timeout=2000).strip()
+            except PlaywrightTimeoutError:
+                # 상품명 칸이 없는 행(구분선/안내 행 등 데이터가 아닌 행)은 건너뛴다.
+                continue
 
             for link in row.locator(DOC_LINK_SELECTOR).all():
                 link_text = link.inner_text().strip()
                 doc_type = _resolve_doc_type(link_text)
 
-                def click(p: Page, link=link) -> None:
-                    _click_link(p, link)
+                def fetch(p: Page, link=link) -> bytes | None:
+                    return _fetch(p, link)
 
                 yield ItemTrigger(
                     raw_title=f"{product_name}_{link_text}",
-                    click=click,
+                    fetch=fetch,
                     doc_type=doc_type,
                 )
 
