@@ -1,0 +1,118 @@
+{
+  "user_c": {
+    "display_name": "유저 C",
+    "institutions": {
+      "KB국민은행": {
+        "accounts": [
+          {
+            "account_num": "user_c-KB-001",
+            "is_consent": true,
+            "seqno": "1",
+            "is_foreign_deposit": false,
+            "prod_name": "KB스타정기예금",
+            "is_minus": false,
+            "account_type": "1",
+            "account_status": "1"
+          }
+        ],
+        "account_basic": [
+          {
+            "currency_code": "KRW",
+            "saving_method": "거치식",
+            "issue_date": "20240101",
+            "exp_date": "20270101",
+            "commit_amt": 100000000.0,
+            "monthly_paid_in_amt": 0.0
+          }
+        ],
+        "account_detail": [
+          {
+            "currency_code": "KRW",
+            "balance_amt": 100000000.0,
+            "withdrawable_amt": 100000000.0,
+            "offered_rate": 3.5,
+            "last_paid_in_cnt": 1
+          }
+        ],
+        "account_transactions": [
+          {
+            "trans_dtime": "20260701090000",
+            "trans_no": "user_c-TX001",
+            "trans_type": "입금",
+            "trans_class": "급여이체",
+            "currency_code": "KRW",
+            "trans_amt": 2500000.0,
+            "balance_amt": 2500000.0,
+            "paid_in_cnt": 1,
+            "trans_memo": "급여"
+          },
+          {
+            "trans_dtime": "20260705090000",
+            "trans_no": "user_c-TX002",
+            "trans_type": "출금",
+            "trans_class": "카드대금출금",
+            "currency_code": "KRW",
+            "trans_amt": 800000.0,
+            "balance_amt": 1700000.0,
+            "paid_in_cnt": 0,
+            "trans_memo": "KB카드 결제"
+          },
+          {
+            "trans_dtime": "20260710090000",
+            "trans_no": "user_c-TX003",
+            "trans_type": "출금",
+            "trans_class": "생활비",
+            "currency_code": "KRW",
+            "trans_amt": 1500000.0,
+            "balance_amt": 200000.0,
+            "paid_in_cnt": 0,
+            "trans_memo": "생활비 출금"
+          }
+        ]
+      }
+    },
+    "cards": [
+      {
+        "card_id": "user_c-CARD001",
+        "card_num": "****-****-****-1111",
+        "is_consent": true,
+        "card_name": "KB국민카드",
+        "card_member": "1",
+        "card_type": "01"
+      }
+    ],
+    "card_approvals": [
+      {
+        "approved_num": "user_c-APR001",
+        "approved_dtime": "20260703120000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "이마트",
+        "approved_amt": 300000
+      },
+      {
+        "approved_num": "user_c-APR002",
+        "approved_dtime": "20260708190000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "쿠팡",
+        "approved_amt": 500000
+      }
+    ]
+  },
+  "user_d": {
+    "display_name": "유저 D",
+    "institutions": {},
+    "cards": [
+      {
+        "card_id": "user_d-CARD001",
+        "card_num": "****-****-****-2222",
+        "is_consent": true,
+        "card_name": "KB국민카드",
+        "card_member": "1",
+        "card_type": "01"
+      }
+    ],
+    "card_approvals": []
+  }
+}

@@ -18,7 +18,7 @@ from qdrant_client.models import (
 
 from app.clients.qdrant_client import get_client
 from app.schemas import ClauseChunk, ClauseSearchResult
-from app.services.embeddings import EMBEDDING_DIM, embed_text
+from app.services.rag.embeddings import EMBEDDING_DIM, embed_text
 
 COLLECTION_NAME = "product_clauses"
 

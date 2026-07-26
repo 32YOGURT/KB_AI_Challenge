@@ -15,7 +15,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.schemas import ClauseChunk  # noqa: E402
-from app.services.rag import upsert_clauses  # noqa: E402
+from app.services.rag.retrieval import upsert_clauses  # noqa: E402
 
 SEED_PATH = Path(__file__).parent.parent / "app" / "data" / "clause_seed.json"
 
