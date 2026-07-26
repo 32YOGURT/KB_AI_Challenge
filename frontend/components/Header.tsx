@@ -5,9 +5,12 @@ import { usePathname } from "next/navigation";
 import { UserSwitcher } from "./UserSwitcher";
 
 const NAV_ITEMS = [
-  { label: "예금·적금", href: "/deposits" },
-  { label: "대출", href: "/loans" },
-  { label: "연금·보험", href: "/pension-insurance" },
+  { label: "예금", href: "/deposits" },
+  { label: "적금", href: "/savings" },
+  { label: "주택담보대출", href: "/mortgage-loans" },
+  { label: "전세자금대출", href: "/rent-house-loans" },
+  { label: "개인신용대출", href: "/credit-loans" },
+  { label: "개인사업자대출", href: "/business-loans" },
   { label: "공시자료", href: "/disclosures" },
 ];
 
@@ -26,7 +29,7 @@ export function Header() {
             <Link href="/" className="text-lg font-semibold tracking-tight">
               금융상품<span className="text-gold">한눈에</span>
             </Link>
-            <nav className="hidden gap-6 text-sm text-white/70 sm:flex">
+            <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-white/70 lg:flex">
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
