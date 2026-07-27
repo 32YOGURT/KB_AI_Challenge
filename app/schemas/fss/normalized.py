@@ -1,4 +1,10 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+FssProductCategory = Literal[
+    "deposit", "saving", "mortgage_loan", "rent_house_loan", "credit_loan", "business_loan"
+]
 
 
 class NormalizedDeposit(BaseModel):

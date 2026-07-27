@@ -1,5 +1,8 @@
 TODO
 
+0. [크롤링 세션 필독] Qdrant 저장 시 company는 FSS kor_co_nm 그대로, product_id는 `f"{category}:{fin_co_no}:{fin_prdt_cd}"` 형식으로 맞춰서 넣을 것.
+   상품명만으론 fin_co_no/fin_prdt_cd를 모르니, 저장 전에 FSS 상품 목록과 이름 매칭해서 코드부터 알아내야 함.
+
 1. PDF 추출할 때, 테이블 잘 구조화해서 임베딩하기
 
 2. 실제 데이터 수집하는 수집 파이프라인 구성하기 (스크립트)
