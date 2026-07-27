@@ -31,7 +31,10 @@ from . import manifest
 CONFIG_DIR = Path(__file__).resolve().parent / "config"
 
 # 크롤링할 은행 목록 (파일명은 config/{bank}.json). 순서대로 처리된다.
-BANKS = ["kb", "shinhan", "hana"]
+# 신한은 간헐적으로 페이지 크래시가 나서 드라이버 연결이 죽을 수 있는데, 그러면
+# 그 뒤 순서의 은행은 브라우저 실행 자체가 안 돼 전부 스킵된다. 그러니 신한을
+# 맨 마지막에 둬서, 죽더라도 이미 끝난 다른 은행 데이터에는 영향이 없게 한다.
+BANKS = ["kb", "hana", "shinhan"]
 
 
 @dataclass
@@ -120,6 +123,11 @@ def crawl_entry(entry: dict, page: Page) -> None:
         else:
             product_id = manifest.generate_product_id(entry["company"], trigger.product_name)
 
+        # saved_path: crawled_data/ 기준 상대경로로 저장한다 (POSIX 슬래시로 통일).
+        # 절대경로를 저장하면 다른 worktree/머신으로 crawled_data를 옮겼을 때 깨지고,
+        # 나중에 S3로 옮길 때도 다시 손봐야 한다 — 상대경로면 그대로 S3 key로도 쓸 수 있다.
+        relative_saved_path = saved_path.relative_to(manifest.CRAWLED_DATA_DIR).as_posix()
+
         manifest.append_entry(
             company=entry["company"],
             doc_type=trigger.doc_type,
@@ -129,7 +137,7 @@ def crawl_entry(entry: dict, page: Page) -> None:
             product_name=trigger.product_name,
             product_id=product_id,
             source_page_url=page.url,
-            saved_path=str(saved_path),
+            saved_path=relative_saved_path,
             downloaded_at=datetime.now(timezone.utc).isoformat(),
         )
 
@@ -151,7 +159,14 @@ def run(headless: bool = True) -> None:
             # 자체에 뭔가 누적되다가 몇 카테고리 뒤에 죽는 문제가 있었다 (실제로 마지막
             # 카테고리만 따로 돌리면 문제없이 성공하는 걸로 확인됨 — 누적 문제가 맞음).
             # 카테고리 수가 몇 개 안 되니 매번 새로 띄워도 비용은 크지 않다.
-            browser = p.chromium.launch(headless=headless)
+            try:
+                browser = p.chromium.launch(headless=headless)
+            except Exception as e:
+                # 브라우저 실행 자체가 실패한 경우(직전 entry의 Page crashed로 드라이버가
+                # 불안정해졌을 때 등)도 여기서 잡아서 이 entry만 건너뛴다 — 이전엔 이 줄이
+                # try 밖에 있어서 전체 스크립트가 죽었었다.
+                print(f"[skip entry] {entry.get('company')}/{entry.get('sub_category')}: 브라우저 실행 실패: {e}")
+                continue
             page = browser.new_page()
             try:
                 crawl_entry(entry, page)

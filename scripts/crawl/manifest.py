@@ -40,7 +40,7 @@ def append_entry(
     product_name: str | None,
     product_id: str | None,
     source_page_url: str,
-    saved_path: str,
+    saved_path: str,  # CRAWLED_DATA_DIR 기준 상대경로(POSIX 슬래시). 절대경로 아님.
     downloaded_at: str,
 ) -> None:
     entries = _load()
