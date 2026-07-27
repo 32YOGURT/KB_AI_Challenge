@@ -8,4 +8,5 @@ class CatalogProduct(BaseModel):
     bank: str
     name: str
     category: str
+    sub_category: str
     source_url: str

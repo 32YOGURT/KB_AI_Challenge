@@ -4,15 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserSwitcher } from "./UserSwitcher";
 
-const NAV_ITEMS = [
-  { label: "예금", href: "/deposits" },
-  { label: "적금", href: "/savings" },
-  { label: "주택담보대출", href: "/mortgage-loans" },
-  { label: "전세자금대출", href: "/rent-house-loans" },
-  { label: "개인신용대출", href: "/credit-loans" },
-  { label: "개인사업자대출", href: "/business-loans" },
-  { label: "공시자료", href: "/disclosures" },
-];
+const CATEGORIES = ["예금", "적금", "입출금자유예금", "외화예금", "주택청약관련예금"];
 
 export function Header() {
   const pathname = usePathname();
@@ -30,15 +22,18 @@ export function Header() {
               금융상품<span className="text-gold">한눈에</span>
             </Link>
             <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-white/70 lg:flex">
-              {NAV_ITEMS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={pathname === item.href ? "text-white" : "hover:text-white"}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {CATEGORIES.map((category) => {
+                const href = `/products/${encodeURIComponent(category)}`;
+                return (
+                  <Link
+                    key={category}
+                    href={href}
+                    className={pathname === href ? "text-white" : "hover:text-white"}
+                  >
+                    {category}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
           <UserSwitcher />

@@ -30,6 +30,7 @@ def load_catalog() -> dict[str, CatalogProduct]:
             bank=doc["company"],
             name=doc["product_name"],
             category=doc["category"],
+            sub_category=doc["sub_category"],
             source_url=doc["source_page_url"],
         )
     return catalog
