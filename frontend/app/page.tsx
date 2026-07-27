@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { fetchCatalog } from "@/lib/api";
+import { CATEGORY_SLUGS } from "@/lib/categories";
+
+const SLUG_BY_CATEGORY = Object.fromEntries(
+  Object.entries(CATEGORY_SLUGS).map(([slug, category]) => [category, slug]),
+);
 
 export default async function Home() {
   const products = await fetchCatalog();
@@ -19,7 +24,7 @@ export default async function Home() {
           {[...counts.entries()].map(([category, count]) => (
             <Link
               key={category}
-              href={`/products/${encodeURIComponent(category)}`}
+              href={`/products/${SLUG_BY_CATEGORY[category] ?? encodeURIComponent(category)}`}
               className="rounded-sm border border-line bg-panel p-6 transition-colors hover:bg-[#F7F8FB]"
             >
               <p className="text-lg font-semibold text-ink">{category}</p>

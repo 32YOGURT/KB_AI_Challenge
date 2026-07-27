@@ -2,13 +2,17 @@ import { notFound } from "next/navigation";
 import { CatalogList } from "@/components/CatalogList";
 import { Header } from "@/components/Header";
 import { fetchCatalog } from "@/lib/api";
+import { CATEGORY_SLUGS } from "@/lib/categories";
 
 export default async function CategoryPage({
   params,
 }: {
   params: Promise<{ category: string }>;
 }) {
-  const { category } = await params;
+  const { category: slug } = await params;
+  const category = CATEGORY_SLUGS[slug];
+  if (!category) notFound();
+
   const products = await fetchCatalog(category);
   if (products.length === 0) notFound();
 

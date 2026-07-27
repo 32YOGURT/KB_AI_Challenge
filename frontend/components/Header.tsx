@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CATEGORY_SLUGS } from "@/lib/categories";
 import { UserSwitcher } from "./UserSwitcher";
-
-const CATEGORIES = ["예금", "적금", "입출금자유예금", "외화예금", "주택청약관련예금"];
 
 export function Header() {
   const pathname = usePathname();
@@ -22,15 +21,15 @@ export function Header() {
               금융상품<span className="text-gold">한눈에</span>
             </Link>
             <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-white/70 lg:flex">
-              {CATEGORIES.map((category) => {
-                const href = `/products/${encodeURIComponent(category)}`;
+              {Object.entries(CATEGORY_SLUGS).map(([slug, label]) => {
+                const href = `/products/${slug}`;
                 return (
                   <Link
-                    key={category}
+                    key={slug}
                     href={href}
                     className={pathname === href ? "text-white" : "hover:text-white"}
                   >
-                    {category}
+                    {label}
                   </Link>
                 );
               })}
