@@ -102,6 +102,7 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
                     raw_title=f"{product_name}_{link_text}",
                     fetch=fetch,
                     doc_type=doc_type,
+                    product_name=product_name,
                 )
 
         next_page_link = _find_page_link(page, current_page + 1)

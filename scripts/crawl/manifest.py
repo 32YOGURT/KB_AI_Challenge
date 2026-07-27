@@ -1,17 +1,22 @@
-"""다운로드한 PDF의 메타데이터(raw_title, source_page_url, saved_path 등)를
-crawled_data/manifest.json에 기록한다.
-
-product_id는 여기서 채우지 않는다 (raw_title이 products.json의 canonical id와
-정확히 일치한다는 보장이 없어서, 매칭은 별도 단계에서 사람이/스크립트로 확인 후 처리).
+"""다운로드한 PDF의 메타데이터(raw_title, product_name, product_id, source_page_url,
+saved_path 등)를 crawled_data/manifest.json에 기록한다.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 CRAWLED_DATA_DIR = Path(__file__).resolve().parent.parent.parent / "crawled_data"
 MANIFEST_PATH = CRAWLED_DATA_DIR / "manifest.json"
+
+
+def generate_product_id(company: str, product_name: str) -> str:
+    """company+product_name으로 결정적 고유 id를 만든다 (같은 상품이면 항상 같은 id).
+    가독성보다 유일성만 보장하면 되므로 해시 기반으로 짧게 자른다."""
+    digest = hashlib.sha1(f"{company}::{product_name}".encode("utf-8")).hexdigest()
+    return digest[:12]
 
 
 def _load() -> list[dict]:
@@ -32,6 +37,8 @@ def append_entry(
     category: str,
     sub_category: str | None,
     raw_title: str,
+    product_name: str | None,
+    product_id: str | None,
     source_page_url: str,
     saved_path: str,
     downloaded_at: str,
@@ -44,6 +51,8 @@ def append_entry(
             "category": category,
             "sub_category": sub_category,
             "raw_title": raw_title,
+            "product_name": product_name,
+            "product_id": product_id,
             "source_page_url": source_page_url,
             "saved_path": saved_path,
             "downloaded_at": downloaded_at,

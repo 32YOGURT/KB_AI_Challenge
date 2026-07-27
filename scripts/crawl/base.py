@@ -41,11 +41,15 @@ class ItemTrigger:
 
     doc_type: 어댑터가 링크 텍스트 등으로 판별한 문서 종류. 판별 못 하면 None이며,
     그 경우 manifest에도 null로 그대로 기록된다 (entry의 doc_type으로 대체하지 않음).
+
+    product_name: 상품 고유 문서(상품설명서/특약 등)를 트리거한 행의 상품명. 회사
+    공통 문서(기본약관 등, 특정 상품 행이 아니라 카테고리 전체에 걸리는 문서)는 None.
     """
 
     raw_title: str
     fetch: Callable[[Page], bytes | None]
     doc_type: str | None = None
+    product_name: str | None = None
 
 
 class Adapter(Protocol):
@@ -106,12 +110,24 @@ def crawl_entry(entry: dict, page: Page) -> None:
         # doc_type: 어댑터가 판별 못 하면 None(=null)으로 그대로 저장한다.
         # entry["doc_type"]로 대체하지 않음 — kb처럼 한 행에 여러 문서종류가 섞인 경우
         # config 값 자체가 의미 없는 placeholder("TODO")라 fallback으로 쓰면 안 됨.
+        #
+        # product_id: doc_type이 "기본약관"이면 특정 상품 문서가 아니라 회사+카테고리
+        # 공통 문서이므로 None (어느 상품 행에서 트리거됐든 무관). product_name이
+        # 애초에 없는 경우(하나은행 공통약관 섹션 등)도 마찬가지로 None. 그 외(상품설명서/
+        # 특약/미판별)는 상품 고유 문서로 보고 product_id를 채운다.
+        if trigger.doc_type == "기본약관" or trigger.product_name is None:
+            product_id = None
+        else:
+            product_id = manifest.generate_product_id(entry["company"], trigger.product_name)
+
         manifest.append_entry(
             company=entry["company"],
             doc_type=trigger.doc_type,
             category=entry["category"],
             sub_category=entry.get("sub_category"),
             raw_title=trigger.raw_title,
+            product_name=trigger.product_name,
+            product_id=product_id,
             source_page_url=page.url,
             saved_path=str(saved_path),
             downloaded_at=datetime.now(timezone.utc).isoformat(),
