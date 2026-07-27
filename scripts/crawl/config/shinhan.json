@@ -1,0 +1,42 @@
+[
+  {
+    "company": "신한은행",
+    "doc_type": "TODO",
+    "category": "적금",
+    "sub_category": "적금",
+    "adapter": "shinhan",
+    "url": "https://www.shinhan.com/hpe/index.jsp#050504090100"
+  },
+  {
+    "company": "신한은행",
+    "doc_type": "TODO",
+    "category": "예금",
+    "sub_category": "예금",
+    "adapter": "shinhan",
+    "url": "https://www.shinhan.com/hpe/index.jsp#050504090200"
+  },
+  {
+    "company": "신한은행",
+    "doc_type": "TODO",
+    "category": "입출금자유예금",
+    "sub_category": "입출금자유예금",
+    "adapter": "shinhan",
+    "url": "https://www.shinhan.com/hpe/index.jsp#050504090300"
+  },
+  {
+    "company": "신한은행",
+    "doc_type": "TODO",
+    "category": "주택청약관련예금",
+    "sub_category": "주택청약관련예금",
+    "adapter": "shinhan",
+    "url": "https://www.shinhan.com/hpe/index.jsp#050504090400"
+  },
+  {
+    "company": "신한은행",
+    "doc_type": "TODO",
+    "category": "외화예금",
+    "sub_category": "외화예금",
+    "adapter": "shinhan",
+    "url": "https://www.shinhan.com/hpe/index.jsp#050504090500"
+  }
+]

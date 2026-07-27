@@ -18,3 +18,7 @@ Thumbs.db
 
 # claude code
 .worktreeinclude
+
+# crawled data (PDF 원본은 빌드타임 재료라 git에 안 올림; manifest.json은 메타데이터라 예외)
+crawled_data/*
+!crawled_data/manifest.json
