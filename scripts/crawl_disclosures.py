@@ -20,6 +20,4 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.crawl import base  # noqa: E402
 
 if __name__ == "__main__":
-    # headless=False: 실제 클릭이 다운로드로 이어지는지 눈으로 확인하기 위해
-    # 검증 끝나면 True로 바꿔도 됨.
-    base.run(headless=False)
+    base.run(headless=True)

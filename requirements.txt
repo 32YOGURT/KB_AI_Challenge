@@ -13,6 +13,7 @@ qdrant-client
 
 # PDF parsing
 pdfplumber
+docling
 
 # Config
 python-dotenv

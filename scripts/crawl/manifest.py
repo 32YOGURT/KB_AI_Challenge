@@ -43,19 +43,26 @@ def append_entry(
     saved_path: str,  # CRAWLED_DATA_DIR 기준 상대경로(POSIX 슬래시). 절대경로 아님.
     downloaded_at: str,
 ) -> None:
+    """saved_path는 company+category+raw_title로 결정적으로 정해지므로, 같은 문서를
+    재크롤링하면 항상 같은 saved_path가 나온다. 이를 키로 삼아 기존 엔트리는 덮어쓰고
+    새 문서만 추가한다 — 크롤러를 여러 번 돌려도 manifest가 중복으로 불어나지 않게 한다."""
     entries = _load()
-    entries.append(
-        {
-            "company": company,
-            "doc_type": doc_type,
-            "category": category,
-            "sub_category": sub_category,
-            "raw_title": raw_title,
-            "product_name": product_name,
-            "product_id": product_id,
-            "source_page_url": source_page_url,
-            "saved_path": saved_path,
-            "downloaded_at": downloaded_at,
-        }
-    )
+    new_entry = {
+        "company": company,
+        "doc_type": doc_type,
+        "category": category,
+        "sub_category": sub_category,
+        "raw_title": raw_title,
+        "product_name": product_name,
+        "product_id": product_id,
+        "source_page_url": source_page_url,
+        "saved_path": saved_path,
+        "downloaded_at": downloaded_at,
+    }
+    for i, entry in enumerate(entries):
+        if entry["saved_path"] == saved_path:
+            entries[i] = new_entry
+            break
+    else:
+        entries.append(new_entry)
     _save(entries)
