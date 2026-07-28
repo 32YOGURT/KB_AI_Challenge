@@ -18,7 +18,15 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function SignupFlow({ productId }: { productId: string }) {
+export function SignupFlow({
+  productId,
+  label = "AI에게 물어보기",
+  compact = false,
+}: {
+  productId: string;
+  label?: string;
+  compact?: boolean;
+}) {
   const { activeUser } = useUser();
   const [phase, setPhase] = useState<Phase>("idle");
   const [report, setReport] = useState<CheckResponse | null>(null);
@@ -50,9 +58,13 @@ export function SignupFlow({ productId }: { productId: string }) {
       <button
         onClick={startScan}
         disabled={!activeUser}
-        className="w-full rounded-sm bg-gold px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-[#8f6423] disabled:opacity-50"
+        className={
+          compact
+            ? "shrink-0 rounded-full border border-brand/30 bg-brand/5 px-3.5 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand/10 disabled:opacity-50"
+            : "w-full rounded-sm bg-gold px-6 py-3.5 text-base font-semibold text-white transition-colors hover:bg-[#8f6423] disabled:opacity-50"
+        }
       >
-        가입하기
+        {label}
       </button>
 
       {phase !== "idle" && (
@@ -97,12 +109,12 @@ export function SignupFlow({ productId }: { productId: string }) {
                   onClick={() => setConfirmed(true)}
                   className="flex-1 rounded-sm px-4 py-3 text-sm font-medium text-white/80 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white"
                 >
-                  위험 감수하고 가입 ➔
+                  위험 감수하고 계속하기 ➔
                 </button>
               </div>
               {confirmed && (
                 <p className="animate-fade-in mt-3 text-center text-xs text-white/70 font-data">
-                  (데모) 가입 절차 진행 시뮬레이션 — 실제 가입은 진행되지 않았습니다.
+                  (데모) 실제 가입은 은행 홈페이지에서 진행됩니다.
                 </p>
               )}
             </div>

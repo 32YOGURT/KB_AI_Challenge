@@ -1,6 +1,6 @@
-import type { CheckResponse, Product, ProductSummary, UserProfile } from "./types";
+import type { CatalogProduct, CheckResponse, UserProfile } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -14,14 +14,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function fetchProducts(): Promise<ProductSummary[]> {
-  return request<ProductSummary[]>("/api/products");
-}
-
-export function fetchProduct(productId: string): Promise<Product> {
-  return request<Product>(`/api/products/${productId}`);
-}
-
 export function fetchUsers(): Promise<UserProfile[]> {
   return request<UserProfile[]>("/api/users");
 }
@@ -31,4 +23,9 @@ export function checkProduct(productId: string, userId: string): Promise<CheckRe
     method: "POST",
     body: JSON.stringify({ product_id: productId, user_id: userId }),
   });
+}
+
+export function fetchCatalog(category?: string): Promise<CatalogProduct[]> {
+  const query = category ? `?category=${encodeURIComponent(category)}` : "";
+  return request<CatalogProduct[]>(`/api/catalog/products${query}`);
 }

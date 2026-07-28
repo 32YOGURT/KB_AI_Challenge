@@ -3,7 +3,8 @@
 import json
 
 from app.clients.openai_client import get_client
-from app.schemas import ClauseChunk, Product, UserSignals
+from app.schemas import ClauseChunk, UserSignals
+from app.schemas.check import CheckSubject
 
 LLM_MODEL = "gpt-4o-mini"
 
@@ -84,13 +85,10 @@ def _format_signals(signals: UserSignals) -> str:
     )
 
 
-def infer_risk_report(product: Product, signals: UserSignals, clauses: list[ClauseChunk]) -> dict:
+def infer_risk_report(subject: CheckSubject, signals: UserSignals, clauses: list[ClauseChunk]) -> dict:
     """약관 조항 + 유저 마이데이터 신호를 결합해 LLM에 위험성 판정을 요청하고, 파싱된 JSON을 반환한다."""
     user_prompt = (
-        f"[상품 정보]\n{product.bank} {product.name} ({product.category})\n"
-        f"기본금리 {product.base_rate}% / 최대우대금리 {product.max_preferential_rate}% "
-        f"/ 최소가입기간 {product.min_period_months}개월\n"
-        f"{product.description}\n\n"
+        f"[상품 정보]\n{subject.bank} {subject.name} ({subject.category})\n\n"
         f"[유저 소비/자산 데이터]\n{_format_signals(signals)}\n\n"
         f"[약관 조항 (RAG 검색 결과)]\n{_format_clauses(clauses)}"
     )

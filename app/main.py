@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import check, fss, mydata, products
+from app.api import catalog, check, mydata, users
 
 app = FastAPI(title="Fin-Guard AI API")
 
@@ -12,10 +12,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(products.router)
+app.include_router(catalog.router)
 app.include_router(check.router)
-app.include_router(fss.router)
 app.include_router(mydata.router)
+app.include_router(users.router)
 
 
 @app.get("/health")
