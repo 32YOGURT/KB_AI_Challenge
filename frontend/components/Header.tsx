@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CATEGORY_SLUGS } from "@/lib/categories";
 import { UserSwitcher } from "./UserSwitcher";
 
 export function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="bg-brand text-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3 text-xs text-white/60 font-data">
@@ -14,11 +20,19 @@ export function Header() {
             <Link href="/" className="text-lg font-semibold tracking-tight">
               금융상품<span className="text-gold">한눈에</span>
             </Link>
-            <nav className="hidden gap-6 text-sm text-white/70 sm:flex">
-              <span className="cursor-default text-white">예금·적금</span>
-              <span className="cursor-default hover:text-white">대출</span>
-              <span className="cursor-default hover:text-white">연금·보험</span>
-              <span className="cursor-default hover:text-white">공시자료</span>
+            <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-white/70 lg:flex">
+              {Object.entries(CATEGORY_SLUGS).map(([slug, label]) => {
+                const href = `/products/${slug}`;
+                return (
+                  <Link
+                    key={slug}
+                    href={href}
+                    className={pathname === href ? "text-white" : "hover:text-white"}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
             </nav>
           </div>
           <UserSwitcher />
