@@ -1,4 +1,4 @@
-from app.schemas import CheckResponse, RiskBasis
+from app.schemas import CheckResponse, RiskBasis, RiskPoint
 from app.schemas.check import CheckSubject
 from app.services.mydata.user_signals import get_user_signals
 from app.services.rag.llm_inference import infer_risk_report
@@ -18,7 +18,11 @@ def generate_risk_report(subject: CheckSubject, user_id: str) -> CheckResponse:
         product_name=subject.name,
         user_id=user_id,
         risk_level=result["risk_level"],
-        headline=result["headline"],
-        summary_lines=result["summary_lines"],
-        basis=[RiskBasis(clause=b["clause"], source=b["source"]) for b in result["basis"]],
+        points=[
+            RiskPoint(
+                text=p["text"],
+                basis=RiskBasis(clause=p["basis"]["clause"], source=p["basis"]["source"]) if p["basis"] else None,
+            )
+            for p in result["points"]
+        ],
     )

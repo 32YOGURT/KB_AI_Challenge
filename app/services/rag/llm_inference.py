@@ -15,27 +15,35 @@ _RISK_REPORT_SCHEMA = {
         "type": "object",
         "properties": {
             "risk_level": {"type": "string", "enum": ["RED", "YELLOW", "GREEN"]},
-            "headline": {"type": "string", "description": "한 줄 핵심 경고 문구"},
-            "summary_lines": {
+            "points": {
                 "type": "array",
-                "items": {"type": "string"},
-                "description": "정확히 3줄로 구성된 위험성 팩트체크 리포트",
-            },
-            "basis": {
-                "type": "array",
+                "description": "정확히 3개로 구성된 위험성 팩트체크 포인트. 각 포인트는 문장 설명과, 그 판단의 근거가 된 약관 조항(있으면)을 함께 담는다.",
                 "items": {
                     "type": "object",
                     "properties": {
-                        "clause": {"type": "string"},
-                        "source": {"type": "string"},
+                        "text": {"type": "string", "description": "사회 초년생도 바로 이해할 수 있는 쉬운 문장 설명"},
+                        "basis": {
+                            "anyOf": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "clause": {"type": "string"},
+                                        "source": {"type": "string"},
+                                    },
+                                    "required": ["clause", "source"],
+                                    "additionalProperties": False,
+                                },
+                                {"type": "null"},
+                            ],
+                            "description": "이 포인트 판단의 근거가 된 약관 조항. 제공된 컨텍스트에 실제로 존재하는 조항만 인용하며, 근거가 없으면 null.",
+                        },
                     },
-                    "required": ["clause", "source"],
+                    "required": ["text", "basis"],
                     "additionalProperties": False,
                 },
-                "description": "판단 근거가 된 약관 조항. 제공된 컨텍스트에 실제로 존재하는 조항만 인용하며, 근거가 없으면 빈 배열.",
             },
         },
-        "required": ["risk_level", "headline", "summary_lines", "basis"],
+        "required": ["risk_level", "points"],
         "additionalProperties": False,
     },
 }
@@ -45,9 +53,9 @@ _SYSTEM_PROMPT = """당신은 'Fin-Guard AI'로, 금융 상품 가입 직전 소
 
 규칙:
 1. 반드시 risk_report JSON 스키마에 맞춰서만 응답한다. 다른 텍스트는 출력하지 않는다.
-2. basis에 인용하는 조항은 반드시 제공된 [약관 조항] 컨텍스트에 실제로 존재하는 내용만 사용한다. 컨텍스트에 없는 조항을 지어내거나 추측하지 않는다.
-3. 컨텍스트에서 근거 조항을 찾을 수 없으면 basis는 빈 배열로 두고, risk_level은 GREEN으로 판단한다.
-4. summary_lines는 정확히 3줄, 사회 초년생도 바로 이해할 수 있는 쉬운 문장으로 작성한다.
+2. 각 포인트의 basis에 인용하는 조항은 반드시 제공된 [약관 조항] 컨텍스트에 실제로 존재하는 내용만 사용한다. 컨텍스트에 없는 조항을 지어내거나 추측하지 않는다.
+3. 해당 포인트의 근거가 되는 조항을 컨텍스트에서 찾을 수 없으면 그 포인트의 basis는 null로 둔다. 모든 포인트의 근거를 찾을 수 없으면 risk_level은 GREEN으로 판단한다.
+4. points는 정확히 3개, 각 text는 사회 초년생도 바로 이해할 수 있는 쉬운 문장으로 작성한다.
 5. risk_level 기준: RED는 중도해지 페널티/원금 손실 등 심각한 금전적 손해, YELLOW는 우대조건 미달 등 기대보다 낮은 혜택, GREEN은 특이 위험 없음.
 """
 

@@ -10,14 +10,17 @@ export interface RiskBasis {
   source: string;
 }
 
+export interface RiskPoint {
+  text: string;
+  basis: RiskBasis | null;
+}
+
 export interface CheckResponse {
   product_id: string;
   product_name: string;
   user_id: string;
   risk_level: RiskLevel;
-  headline: string;
-  summary_lines: string[];
-  basis: RiskBasis[];
+  points: RiskPoint[];
 }
 
 // app/schemas/catalog.py 미러링 — 크롤러가 만드는 상품 카탈로그 한 건.

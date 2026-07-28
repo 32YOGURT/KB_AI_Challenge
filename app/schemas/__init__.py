@@ -1,5 +1,5 @@
 from app.schemas.catalog import CatalogProduct
-from app.schemas.check import CheckRequest, CheckResponse, CheckSubject, RiskBasis
+from app.schemas.check import CheckRequest, CheckResponse, CheckSubject, RiskBasis, RiskPoint
 from app.schemas.mydata.auth import TokenRequest, TokenResponse
 from app.schemas.rag.clause import ClauseChunk, ClauseSearchResult
 from app.schemas.signals.asset_distribution import AssetDistributionSignal, InstitutionBalance, MaturityItem
@@ -16,6 +16,7 @@ __all__ = [
     "CheckResponse",
     "CheckSubject",
     "RiskBasis",
+    "RiskPoint",
     "TokenRequest",
     "TokenResponse",
     "ClauseChunk",

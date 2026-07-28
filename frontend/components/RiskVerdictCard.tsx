@@ -22,32 +22,26 @@ export function RiskVerdictCard({ report }: { report: CheckResponse }) {
       <p className="pr-20 text-xs uppercase tracking-[0.2em] text-muted font-data">
         Fin-Guard AI 팩트체크
       </p>
-      <h3 className="mt-2 max-w-sm pr-16 font-display text-xl font-semibold italic leading-snug text-ink">
-        {report.headline}
-      </h3>
 
-      <ol className="mt-5 space-y-2.5">
-        {report.summary_lines.map((line, i) => (
+      <ol className="mt-5 space-y-4">
+        {report.points.map((point, i) => (
           <li key={i} className="flex gap-3 text-sm leading-relaxed text-ink/90">
             <span
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold font-data ${meta.tint} ${meta.badge.split(" ")[1]}`}
             >
               {i + 1}
             </span>
-            <span>{line}</span>
+            <div>
+              <p>{point.text}</p>
+              {point.basis && (
+                <p className="mt-1 text-[11px] leading-relaxed text-muted font-data">
+                  근거 · {point.basis.source} — &ldquo;{point.basis.clause}&rdquo;
+                </p>
+              )}
+            </div>
           </li>
         ))}
       </ol>
-
-      {report.basis.length > 0 && (
-        <div className="mt-5 space-y-1.5 border-t border-line pt-3">
-          {report.basis.map((b, i) => (
-            <p key={i} className="text-[11px] leading-relaxed text-muted font-data">
-              근거 · {b.source} — &ldquo;{b.clause}&rdquo;
-            </p>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

@@ -26,11 +26,14 @@ class RiskBasis(BaseModel):
     source: str
 
 
+class RiskPoint(BaseModel):
+    text: str
+    basis: RiskBasis | None = None
+
+
 class CheckResponse(BaseModel):
     product_id: str
     product_name: str
     user_id: str
     risk_level: Literal["RED", "YELLOW", "GREEN"]
-    headline: str
-    summary_lines: list[str]
-    basis: list[RiskBasis]
+    points: list[RiskPoint]
