@@ -1,3 +1,5 @@
+# fss 사용 안하면서 현재는 사용 안하는 코드
+
 from fastapi import APIRouter, HTTPException, Query
 
 from app.clients.fss_client import FSSAPIError, FSSClient
