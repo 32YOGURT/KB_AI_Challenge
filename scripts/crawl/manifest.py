@@ -54,7 +54,7 @@ def append_entry(
     product_id: str | None,
     content_hash: str,
     source_page_url: str,
-    saved_path: str,  # CRAWLED_DATA_DIR 기준 상대경로(POSIX 슬래시). 절대경로 아님.
+    saved_path: str,  # MinIO object key ("{company}/{category}/{title}.pdf"). 로컬 경로 아님.
     downloaded_at: str,
 ) -> None:
     """(company, category, raw_title)로 문서 한 건을 식별한다. 같은 문서를 재크롤링하면

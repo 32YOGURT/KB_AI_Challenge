@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
+from app.clients import minio_client  # noqa: E402
 from app.schemas import ClauseChunk  # noqa: E402
 from app.services.rag.retrieval import upsert_clauses  # noqa: E402
 from scripts.crawl.manifest import CRAWLED_DATA_DIR, MANIFEST_PATH  # noqa: E402
@@ -38,6 +39,21 @@ from scripts.rag.page_chunker import chunk_pages  # noqa: E402
 from scripts.rag.pdf_to_markdown import convert_pdf  # noqa: E402
 
 CLAUSE_DOC_TYPES = {"기본약관", "특약", "약정서"}
+
+# entry["saved_path"]는 이제 로컬 경로가 아니라 MinIO object key라, 파싱 전에 여기로
+# 내려받아 캐싱한다 (docling이 실제 파일 경로를 요구하고, 재실행 시 재다운로드도 피함).
+_MINIO_CACHE_DIR = CRAWLED_DATA_DIR / ".minio_cache"
+
+
+def _local_pdf_path(entry: dict) -> Path:
+    return _MINIO_CACHE_DIR / entry["saved_path"]
+
+
+def _ensure_pdf_downloaded(entry: dict) -> Path:
+    pdf_path = _local_pdf_path(entry)
+    if not pdf_path.exists():
+        minio_client.download_to_path(entry["saved_path"], pdf_path)
+    return pdf_path
 
 _TABLE_ROW_RE = re.compile(r"^\|[-:\s|]+\|$", re.MULTILINE)
 _EFFECTIVE_DATE_RE = re.compile(
@@ -57,7 +73,7 @@ def _extract_effective_date(pages: list[dict]) -> str | None:
 
 
 def build_chunks(entry: dict) -> list[ClauseChunk]:
-    pdf_path = CRAWLED_DATA_DIR / entry["saved_path"]
+    pdf_path = _local_pdf_path(entry)
     pages = convert_pdf(pdf_path)
     if not pages:
         return []
@@ -180,8 +196,9 @@ def main() -> None:
     seen_hashes: set[str] = set()
 
     for i, entry in enumerate(entries, start=1):
-        pdf_path = CRAWLED_DATA_DIR / entry["saved_path"]
-        if not pdf_path.exists():
+        try:
+            _ensure_pdf_downloaded(entry)
+        except Exception:  # noqa: BLE001 - MinIO에 해당 object가 없거나 접속 실패
             skipped_missing_pdf += 1
             continue
 

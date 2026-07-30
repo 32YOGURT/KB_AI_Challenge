@@ -11,6 +11,9 @@ openai
 # Vector DB
 qdrant-client
 
+# Object storage (크롤링한 PDF 원본)
+minio
+
 # PDF parsing
 pdfplumber
 docling

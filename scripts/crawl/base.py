@@ -10,7 +10,8 @@ category, url)마다 URL 도메인에 맞는 adapter(scripts/crawl/adapters/)를
 은행마다 PDF를 실제로 받아오는 방식이 다르다 (KB: 클릭 → 브라우저 다운로드 이벤트,
 신한: 클릭 → AJAX 응답 안의 PDF URL을 HTTP로 GET). 그래서 어댑터는 "이 항목의 PDF
 바이트를 어떻게든 가져오는" fetch(page) -> bytes만 책임지고, base.py는 그 바이트를
-"파일로 저장 → manifest 기록"하는 공통 흐름만 담당한다.
+"MinIO에 업로드 → manifest 기록"하는 공통 흐름만 담당한다 (PDF 원본은 로컬 디스크가
+아니라 MinIO 버킷에 저장되고, crawled_data/manifest.json은 메타데이터만 로컬에 둔다).
 
 adapter가 구현해야 하는 인터페이스는 Adapter 참고.
 
@@ -18,12 +19,13 @@ adapter가 구현해야 하는 인터페이스는 Adapter 참고.
 ("_common/") 밑에 저장해 카테고리 페이지마다 같은 문서가 복제되는 걸 경로 단계에서 막는다.
 (2) 그래도 raw_title이 상품명으로 갈라져서 내용은 같은데 제목이 다른 경우(KB/신한처럼 상품
 행마다 동일 기본약관을 링크)가 남는데, 이건 content_hash 기반 dedup(crawl_entry의 seen_hashes)이
-잡는다 — 파일 자체를 다시 쓰지 않고 기존 saved_path를 재사용한다.
+잡는다 — MinIO에 다시 올리지 않고 기존 saved_path(object key)를 재사용한다.
 """
 
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
 from dataclasses import dataclass
@@ -32,6 +34,9 @@ from pathlib import Path
 from typing import Callable, Iterator, Protocol
 
 from playwright.sync_api import Page, sync_playwright
+
+from app.clients import minio_client
+from app.config import MINIO_BUCKET_NAME
 
 from . import manifest
 
@@ -89,12 +94,21 @@ def _sanitize_filename(title: str) -> str:
     return re.sub(r'[\\/:*?"<>|]', "_", title).strip()
 
 
-def _save_bytes(content: bytes, company: str, category: str, raw_title: str) -> Path:
-    out_dir = manifest.CRAWLED_DATA_DIR / company / category
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{_sanitize_filename(raw_title)}.pdf"
-    out_path.write_bytes(content)
-    return out_path
+def _object_key(company: str, category: str, raw_title: str) -> str:
+    return f"{company}/{category}/{_sanitize_filename(raw_title)}.pdf"
+
+
+def _upload_bytes(content: bytes, company: str, category: str, raw_title: str) -> str:
+    """PDF 바이트를 MinIO에 올리고 object key를 돌려준다."""
+    key = _object_key(company, category, raw_title)
+    minio_client.get_client().put_object(
+        MINIO_BUCKET_NAME,
+        key,
+        io.BytesIO(content),
+        length=len(content),
+        content_type="application/pdf",
+    )
+    return key
 
 
 # 공통 문서(기본약관)를 저장할 때 category 자리에 쓰는 고정 폴더명.
@@ -129,9 +143,9 @@ def resolve_common_doc(
 def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
     """config/{은행}.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다.
 
-    seen_hashes: content sha256 -> 그 내용으로 이미 저장된 saved_path. run() 전체에서
+    seen_hashes: content sha256 -> 그 내용으로 이미 업로드된 MinIO object key. run() 전체에서
     하나를 공유해서, 이 실행 중 어디서든 내용이 같은 파일을 다시 받으면(예: KB/신한처럼
-    상품 행마다 동일한 기본약관을 링크하는 경우) 디스크에 다시 쓰지 않고 기존 파일을
+    상품 행마다 동일한 기본약관을 링크하는 경우) MinIO에 다시 올리지 않고 기존 object를
     가리키게 한다"""
     adapter = _adapter_for(entry["adapter"])
     page.goto(entry["url"])
@@ -145,18 +159,14 @@ def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
         content_hash = hashlib.sha256(content).hexdigest()
         existing_path = seen_hashes.get(content_hash)
         if existing_path is not None:
-            relative_saved_path = existing_path
+            saved_path = existing_path
             print(f"[dedup] 동일 파일 재사용: {trigger.raw_title} -> {existing_path}")
         else:
             storage_category = (
                 COMMON_DOC_STORAGE_CATEGORY if trigger.doc_type == "기본약관" else entry["category"]
             )
-            saved_path = _save_bytes(content, entry["company"], storage_category, trigger.raw_title)
-            # saved_path: crawled_data/ 기준 상대경로로 저장한다 (POSIX 슬래시로 통일).
-            # 절대경로를 저장하면 다른 worktree/머신으로 crawled_data를 옮겼을 때 깨지고,
-            # 나중에 S3로 옮길 때도 다시 손봐야 한다 — 상대경로면 그대로 S3 key로도 쓸 수 있다.
-            relative_saved_path = saved_path.relative_to(manifest.CRAWLED_DATA_DIR).as_posix()
-            seen_hashes[content_hash] = relative_saved_path
+            saved_path = _upload_bytes(content, entry["company"], storage_category, trigger.raw_title)
+            seen_hashes[content_hash] = saved_path
 
         # product_id: product_name이 없으면(회사 공통 문서로 판별됨) None, 있으면 채운다.
         if trigger.product_name is None:
@@ -174,7 +184,7 @@ def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
             product_id=product_id,
             content_hash=content_hash,
             source_page_url=page.url,
-            saved_path=relative_saved_path,
+            saved_path=saved_path,
             downloaded_at=datetime.now(timezone.utc).isoformat(),
         )
 
