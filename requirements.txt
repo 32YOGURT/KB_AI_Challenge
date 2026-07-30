@@ -7,6 +7,7 @@ httpx
 
 # Embeddings
 openai
+tiktoken
 
 # Vector DB
 qdrant-client
