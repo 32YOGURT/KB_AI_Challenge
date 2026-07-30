@@ -3,6 +3,7 @@
 """
 
 import uuid
+from functools import lru_cache
 
 from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.models import (
@@ -52,13 +53,20 @@ def upsert_clauses(chunks: list[ClauseChunk]) -> None:
     get_client().upsert(collection_name=COLLECTION_NAME, points=points)
 
 
+# 검색 쿼리는 query_builder의 축(axis) 템플릿에서 나오는 고정 문자열 집합(카테고리 x 축
+# 개수 정도)이라, 매 요청마다 같은 텍스트를 다시 임베딩하게 된다. 요청마다 임베딩 API를
+# 새로 부르면 그만큼 지연이 쌓이므로 프로세스 내에서 캐싱한다. maxsize는 실제 축
+# 템플릿 개수보다 넉넉하게 잡아둔 값.
+_embed_query = lru_cache(maxsize=64)(embed_text)
+
+
 def search_clauses(product_id: str, company: str, query: str, top_k: int = 5) -> list[ClauseSearchResult]:
     """product_id 전용 문서 + company 공통 문서(기본약관 등)를 함께 검색한다.
 
     컬렉션이 아직 색인되지 않은 경우(RAG miss) 빈 리스트를 반환한다 — 호출부(LLM 추론)가
     이를 "근거 조항 없음"으로 처리한다.
     """
-    vector = embed_text(query)
+    vector = _embed_query(query)
     try:
         results = get_client().query_points(
             collection_name=COLLECTION_NAME,
@@ -79,3 +87,21 @@ def search_clauses(product_id: str, company: str, query: str, top_k: int = 5) ->
         raise
 
     return [ClauseSearchResult(**point.payload, score=point.score) for point in results]
+
+
+def search_clauses_multi(
+    product_id: str, company: str, queries: list[str], top_k_per_query: int = 2
+) -> list[ClauseSearchResult]:
+    """위험 축마다(query_builder.build_search_queries) 개별로 search_clauses를 돌리고 병합한다.
+
+    같은 조항이 여러 축에 걸리는 경우가 실제로 있다(예: "중도해지이율 및 만기후이율"
+    조항은 중도해지 축과 만기 축 양쪽에 매치될 수 있음). content_hash로 dedup하고,
+    겹치면 더 높은 점수 쪽을 남긴다. 최종 정렬은 점수 내림차순.
+    """
+    best: dict[str, ClauseSearchResult] = {}
+    for query in queries:
+        for result in search_clauses(product_id=product_id, company=company, query=query, top_k=top_k_per_query):
+            existing = best.get(result.content_hash)
+            if existing is None or result.score > existing.score:
+                best[result.content_hash] = result
+    return sorted(best.values(), key=lambda r: r.score, reverse=True)
