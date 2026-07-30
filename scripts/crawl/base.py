@@ -74,6 +74,31 @@ class Adapter(Protocol):
         ...
 
 
+# 링크 텍스트가 이 목록과 정확히 일치하면, 상품 행에서 트리거됐어도 회사 공통 문서로
+# 취급한다 (실제 텍스트는 은행 페이지 확인 후 채워 넣는다).
+COMMON_DOC_LINK_TEXTS: set[str] = set()
+
+COMMON_DOC_LINK_TEXTS.add("예금거래기본약관")
+COMMON_DOC_LINK_TEXTS.add("적립식예금약관")
+COMMON_DOC_LINK_TEXTS.add("외화예금거래기본약관")
+COMMON_DOC_LINK_TEXTS.add("거치식예금약관")
+COMMON_DOC_LINK_TEXTS.add("입출금이자유로운예금약관")
+COMMON_DOC_LINK_TEXTS.add("전자금융거래기본약관")
+
+
+def _strip_whitespace(text: str) -> str:
+    return re.sub(r"\s+", "", text)
+
+_COMMON_DOC_LINK_TEXTS_NORMALIZED = {_strip_whitespace(t) for t in COMMON_DOC_LINK_TEXTS}
+
+
+def resolve_common_doc(
+    doc_type: str | None, link_text: str, product_name: str | None
+) -> tuple[str | None, str | None]:
+    if _strip_whitespace(link_text) in _COMMON_DOC_LINK_TEXTS_NORMALIZED:
+        return "기본약관", None
+    return doc_type, product_name
+
 from .adapters import hana, kb, shinhan  # noqa: E402
 
 ADAPTERS = {
@@ -113,31 +138,6 @@ def _upload_bytes(content: bytes, company: str, category: str, raw_title: str) -
 
 # 공통 문서(기본약관)를 저장할 때 category 자리에 쓰는 고정 폴더명.
 COMMON_DOC_STORAGE_CATEGORY = "_common"
-
-# 링크 텍스트가 이 목록과 정확히 일치하면, 상품 행에서 트리거됐어도 회사 공통 문서로
-# 취급한다 (실제 텍스트는 은행 페이지 확인 후 채워 넣는다).
-COMMON_DOC_LINK_TEXTS: set[str] = set()
-
-COMMON_DOC_LINK_TEXTS.add("예금거래기본약관")
-COMMON_DOC_LINK_TEXTS.add("적립식예금약관")
-COMMON_DOC_LINK_TEXTS.add("외화예금거래기본약관")
-COMMON_DOC_LINK_TEXTS.add("거치식예금약관")
-COMMON_DOC_LINK_TEXTS.add("입출금이자유로운예금약관")
-COMMON_DOC_LINK_TEXTS.add("전자금융거래기본약관")
-
-
-def _strip_whitespace(text: str) -> str:
-    return re.sub(r"\s+", "", text)
-
-_COMMON_DOC_LINK_TEXTS_NORMALIZED = {_strip_whitespace(t) for t in COMMON_DOC_LINK_TEXTS}
-
-
-def resolve_common_doc(
-    doc_type: str | None, link_text: str, product_name: str | None
-) -> tuple[str | None, str | None]:
-    if _strip_whitespace(link_text) in _COMMON_DOC_LINK_TEXTS_NORMALIZED:
-        return "기본약관", None
-    return doc_type, product_name
 
 
 def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
