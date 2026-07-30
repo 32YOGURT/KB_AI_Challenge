@@ -18,7 +18,7 @@ from typing import Iterator
 
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
-from ..base import ItemTrigger
+from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger
 
 # 링크 텍스트에 아래 키워드가 포함되어 있으면 해당 doc_type으로 판별한다 (KB와 동일한 이유:
 # 특약/상품설명서는 "신한 청년미래적금 특약"처럼 상품명이 앞에 붙어서 나옴).
@@ -38,8 +38,7 @@ def _resolve_doc_type(link_text: str) -> str | None:
     return None
 
 
-# 카테고리 페이지마다 grid의 id(grd_자료실 등)가 공통인지는 아직 다른 페이지로 검증 전.
-# TODO: 다른 카테고리 페이지에서도 이 id가 동일한지 확인 필요.
+# grid의 id(grd_자료실 등)는 5개 카테고리 페이지 전부에서 동일하게 확인됨.
 # 한 페이지에 8개씩 보여주는데 .grid_body_row가 그보다 더 잡힐 때가 있음 — WebSquare가
 # 내부적으로 들고 있는 숨겨진 여분/템플릿 행으로 보여서 :visible로 걸러낸다.
 ROW_SELECTOR = "#grd_자료실 .grid_body_row:visible"
@@ -76,9 +75,9 @@ def _fetch(page: Page, doc_button) -> bytes | None:
     try:
         try:
             with page.expect_response(
-                lambda r: "serviceEndpoint/httpDigital" in r.url, timeout=8000
+                lambda r: "serviceEndpoint/httpDigital" in r.url, timeout=DEFAULT_TIMEOUT_MS
             ) as response_info:
-                doc_button.click(force=True, timeout=8000)
+                doc_button.click(force=True, timeout=DEFAULT_TIMEOUT_MS)
         except PlaywrightTimeoutError:
             return None
 
@@ -96,7 +95,7 @@ def _fetch(page: Page, doc_button) -> bytes | None:
             return None
 
         try:
-            pdf_response = page.context.request.get(pdf_url, timeout=15000)
+            pdf_response = page.context.request.get(pdf_url, timeout=DEFAULT_TIMEOUT_MS)
         except PlaywrightTimeoutError:
             return None
         if not pdf_response.ok:
@@ -116,7 +115,7 @@ def _find_page_link(page: Page, page_number: int):
 def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
     # SPA라 grid 데이터가 초기 페이지 로드 이후 별도 AJAX로 비동기 렌더링된다.
     # base.py의 page.goto()는 초기 로드만 기다리므로, 여기서 행이 실제로 뜰 때까지 기다려야 한다.
-    page.wait_for_selector(ROW_SELECTOR, timeout=10000)
+    page.wait_for_selector(ROW_SELECTOR, timeout=DEFAULT_TIMEOUT_MS)
     # 행이 "존재"하는 시점과 내부 셀 내용까지 완전히 렌더링되는 시점 사이에 살짝 텀이
     # 있어서, 바로 이어서 첫 행을 건드리면 가끔 stale/timeout이 났다. 짧게 더 기다린다.
     page.wait_for_timeout(500)
@@ -126,13 +125,13 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
         rows = page.locator(ROW_SELECTOR).all()
         for row in rows:
             try:
-                product_name = row.locator(PRODUCT_NAME_SELECTOR).inner_text(timeout=2000).strip()
+                product_name = row.locator(PRODUCT_NAME_SELECTOR).inner_text(timeout=DEFAULT_TIMEOUT_MS).strip()
             except PlaywrightTimeoutError:
                 continue
 
             for link in row.locator(DOC_LINK_SELECTOR).all():
                 try:
-                    link_text = link.inner_text(timeout=2000).strip()
+                    link_text = link.inner_text(timeout=DEFAULT_TIMEOUT_MS).strip()
                 except PlaywrightTimeoutError:
                     # 이 버튼만 못 읽은 것(예: 행이 막 갱신되는 중). 전체를 죽이지 않고 건너뛴다.
                     continue
@@ -156,6 +155,6 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
         # networkidle만으론 부족했음 — 페이지 전환 후 grid가 AJAX로 다시 그려지는 걸
         # 못 기다려서 2페이지부터 행 대부분이 stale/timeout 나는 문제가 있었다.
         # 첫 페이지 진입할 때와 동일하게, 행이 실제로 뜰 때까지 명시적으로 기다린다.
-        page.wait_for_selector(ROW_SELECTOR, timeout=10000)
+        page.wait_for_selector(ROW_SELECTOR, timeout=DEFAULT_TIMEOUT_MS)
         page.wait_for_timeout(500)
         current_page += 1

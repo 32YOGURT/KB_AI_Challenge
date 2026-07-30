@@ -23,7 +23,7 @@ from urllib.parse import urljoin
 
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
-from ..base import ItemTrigger
+from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger
 
 # 링크 텍스트에 포함된 키워드로 doc_type을 판별한다 (KB/신한과 동일한 이유: 상품명이나
 # 접두어가 붙어서 나오는 경우가 있어 완전일치 대신 포함 여부로 본다).
@@ -73,7 +73,7 @@ def _fetch(page: Page, popup_url: str) -> bytes | None:
     그 PDF를 다시 HTTP GET으로 받는다. 실제 창을 열지 않는다 (KB/신한과 다른 방식이지만
     둘 다 결국 'UI 상호작용 대신 그 결과물이 있는 URL을 직접 받는다'는 같은 전략)."""
     try:
-        resp = page.context.request.get(popup_url, timeout=10000)
+        resp = page.context.request.get(popup_url, timeout=DEFAULT_TIMEOUT_MS)
     except PlaywrightTimeoutError:
         return None
     if not resp.ok:
@@ -85,7 +85,7 @@ def _fetch(page: Page, popup_url: str) -> bytes | None:
     pdf_url = match.group(1)
 
     try:
-        pdf_resp = page.context.request.get(pdf_url, timeout=15000)
+        pdf_resp = page.context.request.get(pdf_url, timeout=DEFAULT_TIMEOUT_MS)
     except PlaywrightTimeoutError:
         return None
     if not pdf_resp.ok:
@@ -106,13 +106,13 @@ def _find_page_link(page: Page, page_number: int):
 def _iter_row_triggers(page: Page) -> Iterator[ItemTrigger]:
     for row in page.locator(ROW_SELECTOR).all():
         try:
-            product_name = _normalize(row.locator(PRODUCT_NAME_SELECTOR).first.inner_text(timeout=2000))
+            product_name = _normalize(row.locator(PRODUCT_NAME_SELECTOR).first.inner_text(timeout=DEFAULT_TIMEOUT_MS))
         except PlaywrightTimeoutError:
             continue
 
         for link in row.locator(DOC_LINK_SELECTOR).all():
             try:
-                link_text = _normalize(link.inner_text(timeout=2000))
+                link_text = _normalize(link.inner_text(timeout=DEFAULT_TIMEOUT_MS))
             except PlaywrightTimeoutError:
                 continue
             onclick = link.get_attribute("onclick") or ""
@@ -135,7 +135,7 @@ def _iter_row_triggers(page: Page) -> Iterator[ItemTrigger]:
 def _iter_common_terms_triggers(page: Page) -> Iterator[ItemTrigger]:
     for link in page.locator(COMMON_TERMS_LINK_SELECTOR).all():
         try:
-            link_text = _normalize(link.inner_text(timeout=2000))
+            link_text = _normalize(link.inner_text(timeout=DEFAULT_TIMEOUT_MS))
         except PlaywrightTimeoutError:
             continue
         onclick = link.get_attribute("onclick") or ""

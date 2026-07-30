@@ -1,5 +1,5 @@
-"""다운로드한 PDF의 메타데이터(raw_title, product_name, product_id, source_page_url,
-saved_path 등)를 crawled_data/manifest.json에 기록한다.
+"""다운로드한 PDF의 메타데이터(raw_title, product_name, product_id, content_hash,
+source_page_url, saved_path 등)를 crawled_data/manifest.json에 기록한다.
 """
 
 from __future__ import annotations
@@ -30,6 +30,19 @@ def _save(entries: list[dict]) -> None:
     MANIFEST_PATH.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def existing_hash_index() -> dict[str, str]:
+    """manifest에 이미 기록된 content_hash -> saved_path 매핑을 돌려준다.
+
+    크롤링 시작 시 이걸로 dedup 인덱스를 시드하면, 이전 실행에서 받은 파일과 내용이
+    같은 문서를 이번 실행에서 다시 받더라도 디스크에 중복 저장하지 않는다. content_hash가
+    없는(이 필드가 생기기 전에 기록된) 엔트리는 그냥 건너뛴다."""
+    return {
+        entry["content_hash"]: entry["saved_path"]
+        for entry in _load()
+        if entry.get("content_hash")
+    }
+
+
 def append_entry(
     *,
     company: str,
@@ -39,13 +52,19 @@ def append_entry(
     raw_title: str,
     product_name: str | None,
     product_id: str | None,
+    content_hash: str,
     source_page_url: str,
     saved_path: str,  # CRAWLED_DATA_DIR 기준 상대경로(POSIX 슬래시). 절대경로 아님.
     downloaded_at: str,
 ) -> None:
-    """saved_path는 company+category+raw_title로 결정적으로 정해지므로, 같은 문서를
-    재크롤링하면 항상 같은 saved_path가 나온다. 이를 키로 삼아 기존 엔트리는 덮어쓰고
-    새 문서만 추가한다 — 크롤러를 여러 번 돌려도 manifest가 중복으로 불어나지 않게 한다."""
+    """(company, category, raw_title)로 문서 한 건을 식별한다. 같은 문서를 재크롤링하면
+    이 조합이 그대로 나오므로, 기존 엔트리는 덮어쓰고 새 문서만 추가한다 — 크롤러를 여러
+    번 돌려도 manifest가 중복으로 불어나지 않게 한다.
+
+    saved_path를 키로 쓰지 않는 이유: content_hash가 같은 문서(예: 상품 행마다 동일한
+    기본약관을 링크하는 KB/신한)는 실제 파일을 한 번만 저장하고 여러 엔트리가 같은
+    saved_path를 공유하기 때문 — saved_path로 매칭하면 서로 다른 상품의 엔트리를
+    잘못 덮어쓰게 된다."""
     entries = _load()
     new_entry = {
         "company": company,
@@ -55,12 +74,14 @@ def append_entry(
         "raw_title": raw_title,
         "product_name": product_name,
         "product_id": product_id,
+        "content_hash": content_hash,
         "source_page_url": source_page_url,
         "saved_path": saved_path,
         "downloaded_at": downloaded_at,
     }
+    identity = (company, category, raw_title)
     for i, entry in enumerate(entries):
-        if entry["saved_path"] == saved_path:
+        if (entry["company"], entry["category"], entry["raw_title"]) == identity:
             entries[i] = new_entry
             break
     else:

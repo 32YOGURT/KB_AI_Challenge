@@ -5,8 +5,7 @@
 이 어댑터는 (상품, 문서링크) 조합마다 ItemTrigger를 하나씩 yield하고
 문서 종류는 config의 doc_type 대신 링크 텍스트로 판별해 오버라이드한다.
 
-각 링크는 href="#none" + 클라이언트 JS(onclick)로 처리되는 것으로 보이며,
-실제 onclick 핸들러/selector는 아직 확인 전. 아래 selector들은 전부 TODO.
+각 링크는 href="#none" + 클라이언트 JS(onclick)로 처리된다.
 
 참고 페이지: https://obank.kbstar.com/quics?page=C022182 (적립식예금)
 """
@@ -18,7 +17,7 @@ from typing import Iterator
 
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
-from ..base import ItemTrigger
+from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger
 
 # 링크 텍스트에 아래 키워드가 포함되어 있으면 해당 doc_type으로 판별한다.
 # 예금거래기본약관/적립식예금약관처럼 공통 문서는 텍스트가 고정이지만,
@@ -46,7 +45,7 @@ ROW_SELECTOR = "div.contentWrap > div#CP > div:nth-of-type(3) > div.n_pcontZn > 
 # 상품명은 클릭 대상이 아니라 텍스트만 읽으면 되므로 a로 좁히지 않는다.
 # (외화 계열처럼 th.th01 안에 <a> 없이 텍스트만 있는 페이지도 있음)
 PRODUCT_NAME_SELECTOR = "th.th01"
-DOC_LINK_SELECTOR = "td.tLeft a"  # TODO: 실제 selector로 교체
+DOC_LINK_SELECTOR = "td.tLeft a"
 # 페이지 번호가 <a>가 아니라 폼별 제출 버튼으로 되어 있음:
 #   <form onsubmit="return goPage(N);">
 #     <input type="hidden" name="NEXT_TAG_PAGE" value="N">
@@ -59,7 +58,7 @@ PAGE_NUMBER_SELECTOR = "div.paging input[type=submit]"
 def _fetch(page: Page, link_locator) -> bytes | None:
     """클릭하면 브라우저 다운로드 이벤트가 뜨는 방식. 안 뜨면(문서 링크가 아니었음) None."""
     try:
-        with page.expect_download(timeout=5000) as download_info:
+        with page.expect_download(timeout=DEFAULT_TIMEOUT_MS) as download_info:
             link_locator.click()
     except PlaywrightTimeoutError:
         return None
@@ -86,7 +85,7 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
         rows = page.locator(ROW_SELECTOR).all()
         for row in rows:
             try:
-                product_name = row.locator(PRODUCT_NAME_SELECTOR).inner_text(timeout=2000).strip()
+                product_name = row.locator(PRODUCT_NAME_SELECTOR).inner_text(timeout=DEFAULT_TIMEOUT_MS).strip()
             except PlaywrightTimeoutError:
                 # 상품명 칸이 없는 행(구분선/안내 행 등 데이터가 아닌 행)은 건너뛴다.
                 continue

@@ -13,10 +13,17 @@ category, url)마다 URL 도메인에 맞는 adapter(scripts/crawl/adapters/)를
 "파일로 저장 → manifest 기록"하는 공통 흐름만 담당한다.
 
 adapter가 구현해야 하는 인터페이스는 Adapter 참고.
+
+중복 저장 방지: (1) 기본약관처럼 회사 공통인 문서는 category 대신 COMMON_DOC_STORAGE_CATEGORY
+("_common/") 밑에 저장해 카테고리 페이지마다 같은 문서가 복제되는 걸 경로 단계에서 막는다.
+(2) 그래도 raw_title이 상품명으로 갈라져서 내용은 같은데 제목이 다른 경우(KB/신한처럼 상품
+행마다 동일 기본약관을 링크)가 남는데, 이건 content_hash 기반 dedup(crawl_entry의 seen_hashes)이
+잡는다 — 파일 자체를 다시 쓰지 않고 기존 saved_path를 재사용한다.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -30,10 +37,9 @@ from . import manifest
 
 CONFIG_DIR = Path(__file__).resolve().parent / "config"
 
+DEFAULT_TIMEOUT_MS = 8000
+
 # 크롤링할 은행 목록 (파일명은 config/{bank}.json). 순서대로 처리된다.
-# 신한은 간헐적으로 페이지 크래시가 나서 드라이버 연결이 죽을 수 있는데, 그러면
-# 그 뒤 순서의 은행은 브라우저 실행 자체가 안 돼 전부 스킵된다. 그러니 신한을
-# 맨 마지막에 둬서, 죽더라도 이미 끝난 다른 은행 데이터에는 영향이 없게 한다.
 BANKS = ["kb", "hana", "shinhan"]
 
 
@@ -63,11 +69,8 @@ class Adapter(Protocol):
         ...
 
 
-# adapters는 ItemTrigger/Adapter를 정의한 뒤에 import해야 함 (adapters/*.py가
-# `from ..base import ItemTrigger`로 참조하므로, 먼저 import하면 순환 참조로 깨짐).
 from .adapters import hana, kb, shinhan  # noqa: E402
 
-# config.json의 "adapter" 필드 값 -> adapter 모듈
 ADAPTERS = {
     "kb": kb,
     "hana": hana,
@@ -94,22 +97,42 @@ def _save_bytes(content: bytes, company: str, category: str, raw_title: str) -> 
     return out_path
 
 
-def crawl_entry(entry: dict, page: Page) -> None:
-    """config/{은행}.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다."""
+# 공통 문서(기본약관)를 저장할 때 category 자리에 쓰는 고정 폴더명.
+COMMON_DOC_STORAGE_CATEGORY = "_common"
+
+
+def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
+    """config/{은행}.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다.
+
+    seen_hashes: content sha256 -> 그 내용으로 이미 저장된 saved_path. run() 전체에서
+    하나를 공유해서, 이 실행 중 어디서든 내용이 같은 파일을 다시 받으면(예: KB/신한처럼
+    상품 행마다 동일한 기본약관을 링크하는 경우) 디스크에 다시 쓰지 않고 기존 파일을
+    가리키게 한다"""
     adapter = _adapter_for(entry["adapter"])
     page.goto(entry["url"])
 
     for trigger in adapter.iter_item_triggers(page):
         content = trigger.fetch(page)
         if content is None:
-            # 어댑터가 PDF를 못 받아온 경우 (문서 링크가 아니었거나 다른 동작을 하는
-            # 링크였음). 전체 크롤링을 막지 않고 그냥 이 항목만 건너뛴다.
             print(f"[skip] PDF를 못 받아옴: {trigger.raw_title}")
             continue
 
-        saved_path = _save_bytes(
-            content, entry["company"], entry["category"], trigger.raw_title
-        )
+        content_hash = hashlib.sha256(content).hexdigest()
+        existing_path = seen_hashes.get(content_hash)
+        if existing_path is not None:
+            relative_saved_path = existing_path
+            print(f"[dedup] 동일 파일 재사용: {trigger.raw_title} -> {existing_path}")
+        else:
+            storage_category = (
+                COMMON_DOC_STORAGE_CATEGORY if trigger.doc_type == "기본약관" else entry["category"]
+            )
+            saved_path = _save_bytes(content, entry["company"], storage_category, trigger.raw_title)
+            # saved_path: crawled_data/ 기준 상대경로로 저장한다 (POSIX 슬래시로 통일).
+            # 절대경로를 저장하면 다른 worktree/머신으로 crawled_data를 옮겼을 때 깨지고,
+            # 나중에 S3로 옮길 때도 다시 손봐야 한다 — 상대경로면 그대로 S3 key로도 쓸 수 있다.
+            relative_saved_path = saved_path.relative_to(manifest.CRAWLED_DATA_DIR).as_posix()
+            seen_hashes[content_hash] = relative_saved_path
+
         # doc_type: 어댑터가 판별 못 하면 None(=null)으로 그대로 저장한다.
         # entry["doc_type"]로 대체하지 않음 — kb처럼 한 행에 여러 문서종류가 섞인 경우
         # config 값 자체가 의미 없는 placeholder("TODO")라 fallback으로 쓰면 안 됨.
@@ -123,11 +146,6 @@ def crawl_entry(entry: dict, page: Page) -> None:
         else:
             product_id = manifest.generate_product_id(entry["company"], trigger.product_name)
 
-        # saved_path: crawled_data/ 기준 상대경로로 저장한다 (POSIX 슬래시로 통일).
-        # 절대경로를 저장하면 다른 worktree/머신으로 crawled_data를 옮겼을 때 깨지고,
-        # 나중에 S3로 옮길 때도 다시 손봐야 한다 — 상대경로면 그대로 S3 key로도 쓸 수 있다.
-        relative_saved_path = saved_path.relative_to(manifest.CRAWLED_DATA_DIR).as_posix()
-
         manifest.append_entry(
             company=entry["company"],
             doc_type=trigger.doc_type,
@@ -136,6 +154,7 @@ def crawl_entry(entry: dict, page: Page) -> None:
             raw_title=trigger.raw_title,
             product_name=trigger.product_name,
             product_id=product_id,
+            content_hash=content_hash,
             source_page_url=page.url,
             saved_path=relative_saved_path,
             downloaded_at=datetime.now(timezone.utc).isoformat(),
@@ -152,6 +171,9 @@ def _load_entries() -> list[dict]:
 
 def run(headless: bool = True) -> None:
     entries = _load_entries()
+    # manifest에 이미 content_hash가 기록된 이전 실행 결과로 시드한다 — 재실행 시에도
+    # 이전에 받은 파일과 내용이 같으면 다시 저장하지 않는다.
+    seen_hashes = manifest.existing_hash_index()
     with sync_playwright() as p:
         for entry in entries:
             # entry(카테고리)마다 브라우저 자체를 새로 띄운다. page만 새로 만드는 걸로는
@@ -169,7 +191,7 @@ def run(headless: bool = True) -> None:
                 continue
             page = browser.new_page()
             try:
-                crawl_entry(entry, page)
+                crawl_entry(entry, page, seen_hashes)
             except Exception as e:
                 # 카테고리 하나의 구조 문제(selector 불일치 등)로 전체가 멈추지 않게,
                 # 여기서 잡고 다음 entry로 넘어간다. 이미 처리된 항목의 manifest 기록은 남는다.
