@@ -18,7 +18,7 @@ from qdrant_client.models import (
 
 from app.clients.qdrant_client import get_client
 from app.schemas import ClauseChunk, ClauseSearchResult
-from app.services.rag.embeddings import EMBEDDING_DIM, embed_text
+from app.services.rag.embeddings import EMBEDDING_DIM, embed_text, embed_texts
 
 COLLECTION_NAME = "product_clauses"
 
@@ -40,13 +40,14 @@ def upsert_clauses(chunks: list[ClauseChunk]) -> None:
     """chunk.content_hash로부터 결정적 point id를 만들어서, 같은 내용을 다시 넣어도
     중복 생성 없이 upsert(덮어쓰기)되게 한다."""
     ensure_collection()
+    vectors = embed_texts([chunk.text for chunk in chunks])
     points = [
         PointStruct(
             id=str(uuid.uuid5(uuid.NAMESPACE_URL, chunk.content_hash)),
-            vector=embed_text(chunk.text),
+            vector=vector,
             payload=chunk.model_dump(),
         )
-        for chunk in chunks
+        for chunk, vector in zip(chunks, vectors, strict=True)
     ]
     get_client().upsert(collection_name=COLLECTION_NAME, points=points)
 

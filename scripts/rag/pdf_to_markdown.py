@@ -23,12 +23,17 @@ OCR은 끈다 — 크롤링된 PDF는 전부 텍스트 레이어가 있는 디�
 
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from functools import lru_cache
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
+
+# 파싱 결과(페이지 markdown) 캐시. crawled_data 하위라 이미 .gitignore 대상이다.
+PARSE_CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "crawled_data" / ".parse_cache"
 
 from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend  # noqa: E402
 from docling.datamodel.base_models import InputFormat  # noqa: E402
@@ -53,11 +58,7 @@ def _get_converter() -> DocumentConverter:
     )
 
 
-def convert_pdf(pdf_path: str | Path) -> list[dict]:
-    """PDF를 페이지 단위 markdown 리스트로 변환한다.
-
-    반환: [{"page_number": int, "markdown": str}, ...]
-    """
+def _convert(pdf_path: Path) -> list[dict]:
     result = _get_converter().convert(pdf_path)
     doc = result.document
 
@@ -65,6 +66,30 @@ def convert_pdf(pdf_path: str | Path) -> list[dict]:
         {"page_number": page_no, "markdown": doc.export_to_markdown(page_no=page_no)}
         for page_no in sorted(doc.pages.keys())
     ]
+
+
+def convert_pdf(pdf_path: str | Path) -> list[dict]:
+    """PDF를 페이지 단위 markdown 리스트로 변환한다. 결과는 파일 내용 해시를 키로 디스크에
+    캐시한다.
+
+    캐시가 필요한 이유: 예금거래기본약관 같은 공통 약관이 상품별 폴더에 각각 저장돼서,
+    파일 경로는 달라도 내용이 완전히 같은 PDF가 최대 39번까지 중복 존재한다. 파싱은
+    문서당 평균 8.7초라 중복만으로 30분 가까이 낭비된다. 경로가 아니라 내용 해시를
+    키로 삼아야 이런 사본들이 같은 캐시를 공유한다.
+
+    반환: [{"page_number": int, "markdown": str}, ...]
+    """
+    pdf_path = Path(pdf_path)
+    digest = hashlib.sha256(pdf_path.read_bytes()).hexdigest()
+    cache_file = PARSE_CACHE_DIR / f"{digest}.json"
+
+    if cache_file.exists():
+        return json.loads(cache_file.read_text(encoding="utf-8"))
+
+    pages = _convert(pdf_path)
+    PARSE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file.write_text(json.dumps(pages, ensure_ascii=False), encoding="utf-8")
+    return pages
 
 
 if __name__ == "__main__":
