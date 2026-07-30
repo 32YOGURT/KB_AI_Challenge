@@ -32,6 +32,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 from app.clients import minio_client  # noqa: E402
 from app.schemas import ClauseChunk  # noqa: E402
+from app.services.rag.embeddings import split_for_embedding  # noqa: E402
 from app.services.rag.retrieval import upsert_clauses  # noqa: E402
 from scripts.crawl.manifest import CRAWLED_DATA_DIR, MANIFEST_PATH  # noqa: E402
 from scripts.rag.clause_chunker import chunk_clauses  # noqa: E402
@@ -96,23 +97,28 @@ def build_chunks(entry: dict) -> list[ClauseChunk]:
 
     result = []
     for c in raw_chunks:
-        text = c["text"]
-        result.append(
-            ClauseChunk(
-                product_id=entry["product_id"],
-                company=entry["company"],
-                category=entry["category"],
-                doc_type=doc_type,
-                clause_title=c["clause_title"],
-                text=text,
-                source=f"{label} {c['clause_title']}",
-                source_file=source_file,
-                page=c["page"],
-                effective_date=effective_date,
-                content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                has_table=bool(_TABLE_ROW_RE.search(text)),
+        # 조항/heading 단위 청킹으로도 여전히 임베딩 API 토큰 상한(8192)을 넘는 드문
+        # 경우(예: heading 하나에 거대한 표가 통째로 붙은 문서)가 있어, 넘으면 여기서
+        # 추가로 쪼갠다 — 대부분은 pieces가 1개라 아무 영향 없다.
+        pieces = split_for_embedding(c["text"])
+        for i, text in enumerate(pieces):
+            clause_title = c["clause_title"] + (f" ({i + 1}/{len(pieces)})" if len(pieces) > 1 else "")
+            result.append(
+                ClauseChunk(
+                    product_id=entry["product_id"],
+                    company=entry["company"],
+                    category=entry["category"],
+                    doc_type=doc_type,
+                    clause_title=clause_title,
+                    text=text,
+                    source=f"{label} {clause_title}",
+                    source_file=source_file,
+                    page=c["page"],
+                    effective_date=effective_date,
+                    content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                    has_table=bool(_TABLE_ROW_RE.search(text)),
+                )
             )
-        )
     return result
 
 
