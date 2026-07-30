@@ -9,9 +9,13 @@ doc_type별 분기:
 평탄화가 필요 없다 (기존 pdfplumber 기반 계획과 다른 점).
 
 사용법:
-    python scripts/rag/ingest.py               # 전체 인덱싱 (임베딩 API 호출 발생)
-    python scripts/rag/ingest.py --dry-run      # 임베딩/업서트 없이 청킹 결과만 출력
-    python scripts/rag/ingest.py --limit 20     # 앞 N개 manifest 엔트리만 처리 (검증용)
+    python scripts/rag/ingest.py                        # 전체 인덱싱 (임베딩 API 호출 발생)
+    python scripts/rag/ingest.py --category 예금,적금    # 해당 카테고리만 인덱싱
+    python scripts/rag/ingest.py --dry-run              # 임베딩/업서트 없이 청킹 결과만 출력
+    python scripts/rag/ingest.py --limit 20             # 앞 N개 manifest 엔트리만 처리 (검증용)
+
+    # 예금/적금 중 상품 10개 + 해당 회사 공통 약관만 색인 (데모용 최소 셋)
+    python scripts/rag/ingest.py --category 예금,적금 --max-products 10
 """
 
 from __future__ import annotations
@@ -70,7 +74,9 @@ def build_chunks(entry: dict) -> list[ClauseChunk]:
         effective_date = None
 
     source_file = Path(entry["saved_path"]).name
-    label = entry["product_name"] or entry["company"]
+    # 공통 약관(product_id 없음)은 회사 전체에 적용되므로 상품명을 출처로 쓰면 안 된다 —
+    # 사본 중 마지막에 처리된 상품 이름이 박혀서 엉뚱한 상품이 출처로 표시된다.
+    label = entry["product_name"] if entry["product_id"] else entry["company"]
 
     result = []
     for c in raw_chunks:
@@ -94,19 +100,84 @@ def build_chunks(entry: dict) -> list[ClauseChunk]:
     return result
 
 
+def _filter_products(parser: argparse.ArgumentParser, entries: list[dict], args) -> list[dict]:
+    """지정된 상품의 문서 + 그 상품이 속한 회사의 공통 약관(product_id=None)만 남긴다.
+
+    공통 약관을 함께 넣는 이유: 중도해지 이율, 예금자보호 같은 핵심 조항은 상품별 특약이
+    아니라 회사 공통 기본약관(예금거래기본약관 등)에 있고, 검색 쪽(retrieval.search_clauses)도
+    product_id 일치 문서와 product_id=None 문서를 함께 조회하도록 되어 있다. 상품 문서만
+    색인하면 검색은 되지만 정작 핵심 조항이 빠진다.
+    """
+    if args.product_id:
+        selected = {p.strip() for p in args.product_id.split(",") if p.strip()}
+        known = {e["product_id"] for e in entries if e["product_id"]}
+        unknown = selected - known
+        if unknown:
+            parser.error(f"필터 결과에 없는 product_id: {sorted(unknown)}")
+    else:
+        selected = list(dict.fromkeys(e["product_id"] for e in entries if e["product_id"]))
+        selected = set(selected[: args.max_products])
+
+    companies = {e["company"] for e in entries if e["product_id"] in selected}
+    kept = [
+        e for e in entries if e["product_id"] in selected or (not e["product_id"] and e["company"] in companies)
+    ]
+
+    product_docs = sum(1 for e in kept if e["product_id"])
+    names = sorted({e["product_name"] for e in kept if e["product_id"]})
+    print(f"상품 {len(selected)}개 필터 -> 상품 문서 {product_docs}개 + 공통 약관 {len(kept) - product_docs}개")
+    for name in names:
+        print(f"    - {name}")
+    return kept
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="임베딩/업서트 없이 청킹 결과만 출력")
     parser.add_argument("--limit", type=int, default=None, help="앞 N개 manifest 엔트리만 처리")
+    parser.add_argument(
+        "--category",
+        default=None,
+        help="쉼표로 구분한 카테고리만 처리 (예: '예금,적금'). 미지정 시 manifest 전체",
+    )
+    parser.add_argument(
+        "--max-products",
+        type=int,
+        default=None,
+        help="상품 N개까지만 처리 (manifest 순서). 회사 공통 약관은 자동 포함",
+    )
+    parser.add_argument(
+        "--product-id",
+        default=None,
+        help="쉼표로 구분한 product_id만 처리. 회사 공통 약관은 자동 포함",
+    )
     args = parser.parse_args()
 
     entries = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+
+    if args.category:
+        wanted = {c.strip() for c in args.category.split(",") if c.strip()}
+        available = sorted({e["category"] for e in entries})
+        unknown = wanted - set(available)
+        if unknown:
+            parser.error(f"manifest에 없는 카테고리: {sorted(unknown)} (가능: {available})")
+        entries = [e for e in entries if e["category"] in wanted]
+        print(f"카테고리 {sorted(wanted)} 필터 -> 문서 {len(entries)}개")
+
+    if args.max_products or args.product_id:
+        entries = _filter_products(parser, entries, args)
+
     if args.limit:
         entries = entries[: args.limit]
 
     total_chunks = 0
     skipped_missing_pdf = 0
+    skipped_duplicate = 0
     failed: list[tuple[str, str]] = []
+    # 이미 처리한 청크의 content_hash. 공통 약관이 상품별로 중복 저장돼 있어서 같은 조항이
+    # 수십 번 다시 올라오는데, point id 자체가 content_hash에서 나오므로 두 번째 이후는 같은
+    # point를 덮어쓰는 것뿐이다 — 임베딩 API 호출만 헛돈다(실측 1915개 중 유니크 248개).
+    seen_hashes: set[str] = set()
 
     for i, entry in enumerate(entries, start=1):
         pdf_path = CRAWLED_DATA_DIR / entry["saved_path"]
@@ -119,6 +190,11 @@ def main() -> None:
         except Exception as e:  # noqa: BLE001 - 개별 PDF 실패가 전체 색인을 막지 않게 한다.
             failed.append((entry["raw_title"], repr(e)))
             continue
+
+        new_chunks = [c for c in chunks if c.content_hash not in seen_hashes]
+        skipped_duplicate += len(chunks) - len(new_chunks)
+        seen_hashes.update(c.content_hash for c in new_chunks)
+        chunks = new_chunks
 
         total_chunks += len(chunks)
         tag = f"[{i}/{len(entries)}] {entry['company']} {entry['raw_title']} ({entry['doc_type']})"
@@ -135,7 +211,8 @@ def main() -> None:
 
     print(
         f"\n총 {total_chunks}개 청크 {'생성' if args.dry_run else '색인'} 완료 "
-        f"(문서 {len(entries)}개 중 PDF 없음 {skipped_missing_pdf}개, 파싱 실패 {len(failed)}개)"
+        f"(문서 {len(entries)}개 중 PDF 없음 {skipped_missing_pdf}개, 파싱 실패 {len(failed)}개, "
+        f"중복 청크 스킵 {skipped_duplicate}개)"
     )
     for title, err in failed[:20]:
         print(f"  실패: {title}: {err}")
