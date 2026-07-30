@@ -100,6 +100,31 @@ def _save_bytes(content: bytes, company: str, category: str, raw_title: str) -> 
 # 공통 문서(기본약관)를 저장할 때 category 자리에 쓰는 고정 폴더명.
 COMMON_DOC_STORAGE_CATEGORY = "_common"
 
+# 링크 텍스트가 이 목록과 정확히 일치하면, 상품 행에서 트리거됐어도 회사 공통 문서로
+# 취급한다 (실제 텍스트는 은행 페이지 확인 후 채워 넣는다).
+COMMON_DOC_LINK_TEXTS: set[str] = set()
+
+COMMON_DOC_LINK_TEXTS.add("예금거래기본약관")
+COMMON_DOC_LINK_TEXTS.add("적립식예금약관")
+COMMON_DOC_LINK_TEXTS.add("외화예금거래기본약관")
+COMMON_DOC_LINK_TEXTS.add("거치식예금약관")
+COMMON_DOC_LINK_TEXTS.add("입출금이자유로운예금약관")
+COMMON_DOC_LINK_TEXTS.add("전자금융거래기본약관")
+
+
+def _strip_whitespace(text: str) -> str:
+    return re.sub(r"\s+", "", text)
+
+_COMMON_DOC_LINK_TEXTS_NORMALIZED = {_strip_whitespace(t) for t in COMMON_DOC_LINK_TEXTS}
+
+
+def resolve_common_doc(
+    doc_type: str | None, link_text: str, product_name: str | None
+) -> tuple[str | None, str | None]:
+    if _strip_whitespace(link_text) in _COMMON_DOC_LINK_TEXTS_NORMALIZED:
+        return "기본약관", None
+    return doc_type, product_name
+
 
 def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
     """config/{은행}.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다.
@@ -133,15 +158,8 @@ def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
             relative_saved_path = saved_path.relative_to(manifest.CRAWLED_DATA_DIR).as_posix()
             seen_hashes[content_hash] = relative_saved_path
 
-        # doc_type: 어댑터가 판별 못 하면 None(=null)으로 그대로 저장한다.
-        # entry["doc_type"]로 대체하지 않음 — kb처럼 한 행에 여러 문서종류가 섞인 경우
-        # config 값 자체가 의미 없는 placeholder("TODO")라 fallback으로 쓰면 안 됨.
-        #
-        # product_id: doc_type이 "기본약관"이면 특정 상품 문서가 아니라 회사+카테고리
-        # 공통 문서이므로 None (어느 상품 행에서 트리거됐든 무관). product_name이
-        # 애초에 없는 경우(하나은행 공통약관 섹션 등)도 마찬가지로 None. 그 외(상품설명서/
-        # 특약/미판별)는 상품 고유 문서로 보고 product_id를 채운다.
-        if trigger.doc_type == "기본약관" or trigger.product_name is None:
+        # product_id: product_name이 없으면(회사 공통 문서로 판별됨) None, 있으면 채운다.
+        if trigger.product_name is None:
             product_id = None
         else:
             product_id = manifest.generate_product_id(entry["company"], trigger.product_name)

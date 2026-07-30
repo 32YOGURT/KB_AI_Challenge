@@ -23,7 +23,7 @@ from urllib.parse import urljoin
 
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
-from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger
+from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger, resolve_common_doc
 
 # 링크 텍스트에 포함된 키워드로 doc_type을 판별한다 (KB/신한과 동일한 이유: 상품명이나
 # 접두어가 붙어서 나오는 경우가 있어 완전일치 대신 포함 여부로 본다).
@@ -120,6 +120,7 @@ def _iter_row_triggers(page: Page) -> Iterator[ItemTrigger]:
             if popup_url is None:
                 continue
             doc_type = _resolve_doc_type(link_text)
+            doc_type, trigger_product_name = resolve_common_doc(doc_type, link_text, product_name)
 
             def fetch(p: Page, popup_url=popup_url) -> bytes | None:
                 return _fetch(p, popup_url)
@@ -128,7 +129,7 @@ def _iter_row_triggers(page: Page) -> Iterator[ItemTrigger]:
                 raw_title=f"{product_name}_{link_text}",
                 fetch=fetch,
                 doc_type=doc_type,
-                product_name=product_name,
+                product_name=trigger_product_name,
             )
 
 

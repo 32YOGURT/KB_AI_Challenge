@@ -18,7 +18,7 @@ from typing import Iterator
 
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
-from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger
+from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger, resolve_common_doc
 
 # 링크 텍스트에 아래 키워드가 포함되어 있으면 해당 doc_type으로 판별한다 (KB와 동일한 이유:
 # 특약/상품설명서는 "신한 청년미래적금 특약"처럼 상품명이 앞에 붙어서 나옴).
@@ -136,6 +136,7 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
                     # 이 버튼만 못 읽은 것(예: 행이 막 갱신되는 중). 전체를 죽이지 않고 건너뛴다.
                     continue
                 doc_type = _resolve_doc_type(link_text)
+                doc_type, trigger_product_name = resolve_common_doc(doc_type, link_text, product_name)
 
                 def fetch(p: Page, link=link) -> bytes | None:
                     return _fetch(p, link)
@@ -144,7 +145,7 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
                     raw_title=f"{product_name}_{link_text}",
                     fetch=fetch,
                     doc_type=doc_type,
-                    product_name=product_name,
+                    product_name=trigger_product_name,
                 )
 
         next_page_link = _find_page_link(page, current_page + 1)

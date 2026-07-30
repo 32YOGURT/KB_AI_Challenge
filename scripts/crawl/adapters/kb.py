@@ -17,7 +17,7 @@ from typing import Iterator
 
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 
-from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger
+from ..base import DEFAULT_TIMEOUT_MS, ItemTrigger, resolve_common_doc
 
 # 링크 텍스트에 아래 키워드가 포함되어 있으면 해당 doc_type으로 판별한다.
 # 예금거래기본약관/적립식예금약관처럼 공통 문서는 텍스트가 고정이지만,
@@ -93,6 +93,7 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
             for link in row.locator(DOC_LINK_SELECTOR).all():
                 link_text = link.inner_text().strip()
                 doc_type = _resolve_doc_type(link_text)
+                doc_type, trigger_product_name = resolve_common_doc(doc_type, link_text, product_name)
 
                 def fetch(p: Page, link=link) -> bytes | None:
                     return _fetch(p, link)
@@ -101,7 +102,7 @@ def iter_item_triggers(page: Page) -> Iterator[ItemTrigger]:
                     raw_title=f"{product_name}_{link_text}",
                     fetch=fetch,
                     doc_type=doc_type,
-                    product_name=product_name,
+                    product_name=trigger_product_name,
                 )
 
         next_page_link = _find_page_link(page, current_page + 1)
