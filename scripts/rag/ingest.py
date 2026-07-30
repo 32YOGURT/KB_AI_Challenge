@@ -3,7 +3,7 @@
 
 doc_type별 분기:
 - 기본약관/특약/약정서 -> scripts/rag/clause_chunker.chunk_clauses (제N조 단위)
-- 상품설명서 및 doc_type 미판별 문서 -> scripts/rag/page_chunker.chunk_pages (페이지 단위)
+- 상품설명서 및 doc_type 미판별 문서 -> scripts/rag/section_chunker.chunk_sections (heading 단위)
 
 표는 이미 scripts/rag/pdf_to_markdown.py에서 Docling이 markdown 표로 변환해두므로 별도
 평탄화가 필요 없다 (기존 pdfplumber 기반 계획과 다른 점).
@@ -34,7 +34,7 @@ from app.schemas import ClauseChunk  # noqa: E402
 from app.services.rag.retrieval import upsert_clauses  # noqa: E402
 from scripts.crawl.manifest import CRAWLED_DATA_DIR, MANIFEST_PATH  # noqa: E402
 from scripts.rag.clause_chunker import chunk_clauses  # noqa: E402
-from scripts.rag.page_chunker import chunk_pages  # noqa: E402
+from scripts.rag.section_chunker import chunk_sections  # noqa: E402
 from scripts.rag.pdf_to_markdown import convert_pdf  # noqa: E402
 
 CLAUSE_DOC_TYPES = {"기본약관", "특약", "약정서"}
@@ -70,7 +70,7 @@ def build_chunks(entry: dict) -> list[ClauseChunk]:
         raw_chunks = chunk_clauses(pages)
         effective_date = _extract_effective_date(pages)
     else:
-        raw_chunks = chunk_pages(pages)
+        raw_chunks = chunk_sections(pages)
         effective_date = None
 
     source_file = Path(entry["saved_path"]).name
