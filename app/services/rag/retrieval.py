@@ -53,10 +53,11 @@ def upsert_clauses(chunks: list[ClauseChunk]) -> None:
     get_client().upsert(collection_name=COLLECTION_NAME, points=points)
 
 
-# 검색 쿼리는 query_builder의 축(axis) 템플릿에서 나오는 고정 문자열 집합(카테고리 x 축
-# 개수 정도)이라, 매 요청마다 같은 텍스트를 다시 임베딩하게 된다. 요청마다 임베딩 API를
-# 새로 부르면 그만큼 지연이 쌓이므로 프로세스 내에서 캐싱한다. maxsize는 실제 축
-# 템플릿 개수보다 넉넉하게 잡아둔 값.
+# query_builder가 이제 유저 신호를 반영해 쿼리를 LLM으로 동적 생성하므로, 쿼리 문자열이
+# 더 이상 고정 집합이 아니다 — 캐시 히트율은 낮아지지만(요청마다 문구가 조금씩 다를 수
+# 있음), 우연히 같은 문구가 재사용되는 경우(폴백 시 정적 템플릿, 또는 LLM이 비슷한 유저
+# 상황에 비슷한 쿼리를 생성하는 경우)엔 여전히 임베딩 API 호출을 아낄 수 있어 캐시 자체는
+# 유지한다.
 _embed_query = lru_cache(maxsize=64)(embed_text)
 
 

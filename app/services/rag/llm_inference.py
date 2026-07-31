@@ -69,7 +69,7 @@ def _format_clauses(clauses: list[ClauseChunk]) -> str:
     )
 
 
-def _format_signals(signals: UserSignals) -> str:
+def format_signals(signals: UserSignals) -> str:
     liquidity = signals.liquidity
     dist = signals.asset_distribution
 
@@ -97,7 +97,7 @@ def infer_risk_report(subject: CheckSubject, signals: UserSignals, clauses: list
     """약관 조항 + 유저 마이데이터 신호를 결합해 LLM에 위험성 판정을 요청하고, 파싱된 JSON을 반환한다."""
     user_prompt = (
         f"[상품 정보]\n{subject.bank} {subject.name} ({subject.category})\n\n"
-        f"[유저 소비/자산 데이터]\n{_format_signals(signals)}\n\n"
+        f"[유저 소비/자산 데이터]\n{format_signals(signals)}\n\n"
         f"[약관 조항 (RAG 검색 결과)]\n{_format_clauses(clauses)}"
     )
 
