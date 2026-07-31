@@ -26,7 +26,11 @@ def mydata_user_exists(user_id: str) -> bool:
 
 def list_mydata_users() -> list[UserSummary]:
     return [
-        UserSummary(id=user_id, display_name=data.get("display_name", user_id))
+        UserSummary(
+            id=user_id,
+            display_name=data.get("display_name", user_id),
+            description=data.get("description", ""),
+        )
         for user_id, data in load_mydata_mock().items()
     ]
 
