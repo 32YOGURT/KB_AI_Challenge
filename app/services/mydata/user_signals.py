@@ -2,6 +2,7 @@
 
 from app.schemas.signals.user_signals import UserSignals
 from app.services.mydata.asset_distribution import get_asset_distribution_signal
+from app.services.mydata.card_category import get_card_category_signal
 from app.services.mydata.liquidity import get_liquidity_signal
 
 
@@ -10,4 +11,5 @@ def get_user_signals(user_id: str) -> UserSignals:
         user_id=user_id,
         liquidity=get_liquidity_signal(user_id),
         asset_distribution=get_asset_distribution_signal(user_id),
+        card_category=get_card_category_signal(user_id),
     )

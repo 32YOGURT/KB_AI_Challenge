@@ -1,16 +1,139 @@
 {
-  "user_c": {
-    "display_name": "유저 C",
-    "description": "KB국민은행에 정기예금 1억원. 현금흐름 흑자 (아직 재설계 전)",
+  "user_a": {
+    "display_name": "유저 A",
+    "description": "비상금 사실상 없음. 최근 지출로 잔고가 급감했고 순현금흐름도 마이너스",
     "institutions": {
       "KB국민은행": {
         "accounts": [
           {
-            "account_num": "user_c-KB-001",
+            "account_num": "user_a-KB-001",
             "is_consent": true,
             "seqno": "1",
             "is_foreign_deposit": false,
-            "prod_name": "KB스타정기예금",
+            "prod_name": "KB Star*t 통장",
+            "is_minus": false,
+            "account_type": "1",
+            "account_status": "1"
+          }
+        ],
+        "account_basic": [
+          {
+            "currency_code": "KRW",
+            "saving_method": "수시입출금",
+            "issue_date": "20230301",
+            "exp_date": "99991231",
+            "commit_amt": 0.0,
+            "monthly_paid_in_amt": 0.0
+          }
+        ],
+        "account_detail": [
+          {
+            "currency_code": "KRW",
+            "balance_amt": 200000.0,
+            "withdrawable_amt": 200000.0,
+            "offered_rate": 0.1,
+            "last_paid_in_cnt": 0
+          }
+        ],
+        "account_transactions": [
+          {
+            "trans_dtime": "20260701090000",
+            "trans_no": "user_a-TX001",
+            "trans_type": "입금",
+            "trans_class": "급여이체",
+            "currency_code": "KRW",
+            "trans_amt": 2200000.0,
+            "balance_amt": 2900000.0,
+            "paid_in_cnt": 1,
+            "trans_memo": "급여"
+          },
+          {
+            "trans_dtime": "20260708110000",
+            "trans_no": "user_a-TX002",
+            "trans_type": "출금",
+            "trans_class": "의료비",
+            "currency_code": "KRW",
+            "trans_amt": 1200000.0,
+            "balance_amt": 1700000.0,
+            "paid_in_cnt": 0,
+            "trans_memo": "병원비 결제"
+          },
+          {
+            "trans_dtime": "20260715090000",
+            "trans_no": "user_a-TX003",
+            "trans_type": "출금",
+            "trans_class": "카드대금출금",
+            "currency_code": "KRW",
+            "trans_amt": 1200000.0,
+            "balance_amt": 500000.0,
+            "paid_in_cnt": 0,
+            "trans_memo": "KB카드 결제"
+          },
+          {
+            "trans_dtime": "20260722090000",
+            "trans_no": "user_a-TX004",
+            "trans_type": "출금",
+            "trans_class": "생활비",
+            "currency_code": "KRW",
+            "trans_amt": 300000.0,
+            "balance_amt": 200000.0,
+            "paid_in_cnt": 0,
+            "trans_memo": "생활비 출금"
+          }
+        ]
+      }
+    },
+    "cards": [
+      {
+        "card_id": "user_a-CARD001",
+        "card_num": "****-****-****-1111",
+        "is_consent": true,
+        "card_name": "KB국민카드",
+        "card_member": "1",
+        "card_type": "01"
+      }
+    ],
+    "card_approvals": [
+      {
+        "approved_num": "user_a-APR001",
+        "approved_dtime": "20260705120000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "GS25",
+        "approved_amt": 30000
+      },
+      {
+        "approved_num": "user_a-APR002",
+        "approved_dtime": "20260710190000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "스타벅스",
+        "approved_amt": 6000
+      }
+    ]
+  },
+  "user_b": {
+    "display_name": "유저 B",
+    "description": "KB국민은행 한 곳에 예금·적금 자산이 몰려 있어 예금자보호 한도를 초과",
+    "institutions": {
+      "KB국민은행": {
+        "accounts": [
+          {
+            "account_num": "user_b-KB-001",
+            "is_consent": true,
+            "seqno": "1",
+            "is_foreign_deposit": false,
+            "prod_name": "KB 정기예금",
+            "is_minus": false,
+            "account_type": "1",
+            "account_status": "1"
+          },
+          {
+            "account_num": "user_b-KB-002",
+            "is_consent": true,
+            "seqno": "2",
+            "is_foreign_deposit": false,
+            "prod_name": "KB 정기적금",
             "is_minus": false,
             "account_type": "1",
             "account_status": "1"
@@ -20,18 +143,113 @@
           {
             "currency_code": "KRW",
             "saving_method": "거치식",
-            "issue_date": "20240101",
-            "exp_date": "20270101",
-            "commit_amt": 100000000.0,
+            "issue_date": "20240301",
+            "exp_date": "20270301",
+            "commit_amt": 80000000.0,
+            "monthly_paid_in_amt": 0.0
+          },
+          {
+            "currency_code": "KRW",
+            "saving_method": "적립식",
+            "issue_date": "20240601",
+            "exp_date": "20270601",
+            "commit_amt": 50000000.0,
+            "monthly_paid_in_amt": 1000000.0
+          }
+        ],
+        "account_detail": [
+          {
+            "currency_code": "KRW",
+            "balance_amt": 80000000.0,
+            "withdrawable_amt": 80000000.0,
+            "offered_rate": 3.2,
+            "last_paid_in_cnt": 1
+          },
+          {
+            "currency_code": "KRW",
+            "balance_amt": 50000000.0,
+            "withdrawable_amt": 50000000.0,
+            "offered_rate": 3.8,
+            "last_paid_in_cnt": 14
+          }
+        ],
+        "account_transactions": [
+          {
+            "trans_dtime": "20260705090000",
+            "trans_no": "user_b-TX001",
+            "trans_type": "입금",
+            "trans_class": "이자",
+            "currency_code": "KRW",
+            "trans_amt": 50000.0,
+            "balance_amt": 80050000.0,
+            "paid_in_cnt": 1,
+            "trans_memo": "이자입금"
+          }
+        ]
+      }
+    },
+    "cards": [
+      {
+        "card_id": "user_b-CARD001",
+        "card_num": "****-****-****-2222",
+        "is_consent": true,
+        "card_name": "KB국민카드",
+        "card_member": "1",
+        "card_type": "01"
+      }
+    ],
+    "card_approvals": [
+      {
+        "approved_num": "user_b-APR001",
+        "approved_dtime": "20260703120000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "이마트",
+        "approved_amt": 150000
+      },
+      {
+        "approved_num": "user_b-APR002",
+        "approved_dtime": "20260712190000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "CU",
+        "approved_amt": 8000
+      }
+    ]
+  },
+  "user_c": {
+    "display_name": "유저 C",
+    "description": "다른 상품 만기가 20일 앞으로 다가와 자동재예치 여부를 결정해야 함",
+    "institutions": {
+      "우리은행": {
+        "accounts": [
+          {
+            "account_num": "user_c-WR-001",
+            "is_consent": true,
+            "seqno": "1",
+            "is_foreign_deposit": false,
+            "prod_name": "WON 정기예금",
+            "is_minus": false,
+            "account_type": "1",
+            "account_status": "1"
+          }
+        ],
+        "account_basic": [
+          {
+            "currency_code": "KRW",
+            "saving_method": "거치식",
+            "issue_date": "20250820",
+            "exp_date": "20260820",
+            "commit_amt": 30000000.0,
             "monthly_paid_in_amt": 0.0
           }
         ],
         "account_detail": [
           {
             "currency_code": "KRW",
-            "balance_amt": 100000000.0,
-            "withdrawable_amt": 100000000.0,
-            "offered_rate": 3.5,
+            "balance_amt": 30000000.0,
+            "withdrawable_amt": 30000000.0,
+            "offered_rate": 3.0,
             "last_paid_in_cnt": 1
           }
         ],
@@ -48,26 +266,26 @@
             "trans_memo": "급여"
           },
           {
-            "trans_dtime": "20260705090000",
-            "trans_no": "user_c-TX002",
-            "trans_type": "출금",
-            "trans_class": "카드대금출금",
-            "currency_code": "KRW",
-            "trans_amt": 800000.0,
-            "balance_amt": 1700000.0,
-            "paid_in_cnt": 0,
-            "trans_memo": "KB카드 결제"
-          },
-          {
             "trans_dtime": "20260710090000",
-            "trans_no": "user_c-TX003",
+            "trans_no": "user_c-TX002",
             "trans_type": "출금",
             "trans_class": "생활비",
             "currency_code": "KRW",
-            "trans_amt": 1500000.0,
-            "balance_amt": 200000.0,
+            "trans_amt": 1200000.0,
+            "balance_amt": 1300000.0,
             "paid_in_cnt": 0,
             "trans_memo": "생활비 출금"
+          },
+          {
+            "trans_dtime": "20260715090000",
+            "trans_no": "user_c-TX003",
+            "trans_type": "출금",
+            "trans_class": "카드대금출금",
+            "currency_code": "KRW",
+            "trans_amt": 900000.0,
+            "balance_amt": 400000.0,
+            "paid_in_cnt": 0,
+            "trans_memo": "우리카드 결제"
           }
         ]
       }
@@ -75,7 +293,40 @@
     "cards": [
       {
         "card_id": "user_c-CARD001",
-        "card_num": "****-****-****-1111",
+        "card_num": "****-****-****-3333",
+        "is_consent": true,
+        "card_name": "우리카드",
+        "card_member": "1",
+        "card_type": "01"
+      }
+    ],
+    "card_approvals": [
+      {
+        "approved_num": "user_c-APR001",
+        "approved_dtime": "20260704120000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "홈플러스",
+        "approved_amt": 90000
+      },
+      {
+        "approved_num": "user_c-APR002",
+        "approved_dtime": "20260715190000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "배달의민족",
+        "approved_amt": 25000
+      }
+    ]
+  },
+  "user_d": {
+    "display_name": "유저 D",
+    "description": "카드 승인내역이 택시 위주. 지하철/버스 실적은 0건",
+    "institutions": {},
+    "cards": [
+      {
+        "card_id": "user_d-CARD001",
+        "card_num": "****-****-****-4444",
         "is_consent": true,
         "card_name": "KB국민카드",
         "card_member": "1",
@@ -84,37 +335,37 @@
     ],
     "card_approvals": [
       {
-        "approved_num": "user_c-APR001",
-        "approved_dtime": "20260703120000",
+        "approved_num": "user_d-APR001",
+        "approved_dtime": "20260702083000",
         "status": "01",
         "pay_type": "01",
-        "merchant_name": "이마트",
-        "approved_amt": 300000
+        "merchant_name": "카카오T택시",
+        "approved_amt": 15000
       },
       {
-        "approved_num": "user_c-APR002",
-        "approved_dtime": "20260708190000",
+        "approved_num": "user_d-APR002",
+        "approved_dtime": "20260709220000",
         "status": "01",
         "pay_type": "01",
-        "merchant_name": "쿠팡",
-        "approved_amt": 500000
+        "merchant_name": "카카오T택시",
+        "approved_amt": 21000
+      },
+      {
+        "approved_num": "user_d-APR003",
+        "approved_dtime": "20260716230000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "택시",
+        "approved_amt": 18000
+      },
+      {
+        "approved_num": "user_d-APR004",
+        "approved_dtime": "20260723090000",
+        "status": "01",
+        "pay_type": "01",
+        "merchant_name": "카카오T택시",
+        "approved_amt": 12000
       }
     ]
-  },
-  "user_d": {
-    "display_name": "유저 D",
-    "description": "연동된 계좌 없음. 카드만 보유 (아직 재설계 전)",
-    "institutions": {},
-    "cards": [
-      {
-        "card_id": "user_d-CARD001",
-        "card_num": "****-****-****-2222",
-        "is_consent": true,
-        "card_name": "KB국민카드",
-        "card_member": "1",
-        "card_type": "01"
-      }
-    ],
-    "card_approvals": []
   }
 }

@@ -30,10 +30,21 @@ export interface AssetDistributionSignal {
   upcoming_maturities: MaturityItem[];
 }
 
+export interface CategorySpend {
+  category: string;
+  count: number;
+  total_amt: number;
+}
+
+export interface CardCategorySignal {
+  by_category: CategorySpend[];
+}
+
 export interface UserSignals {
   user_id: string;
   liquidity: LiquiditySignal;
   asset_distribution: AssetDistributionSignal;
+  card_category: CardCategorySignal;
 }
 
 export interface RiskBasis {

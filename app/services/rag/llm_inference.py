@@ -68,6 +68,7 @@ def _format_clauses(clauses: list[ClauseChunk]) -> str:
 def format_signals(signals: UserSignals) -> str:
     liquidity = signals.liquidity
     dist = signals.asset_distribution
+    card_category = signals.card_category
 
     institutions = "\n".join(
         f"  - {inst.org_code}: 잔액 {inst.total_balance:,.0f}원"
@@ -79,13 +80,18 @@ def format_signals(signals: UserSignals) -> str:
         f"  - {m.org_code} {m.prod_name}: 만기 {m.exp_date}" for m in dist.upcoming_maturities
     ) or "  - 없음"
 
+    categories = "\n".join(
+        f"  - {c.category}: {c.count}건 ({c.total_amt:,.0f}원)" for c in card_category.by_category
+    ) or "  - 카드 승인내역 없음"
+
     return (
         f"- 총 잔액(유동자산): {liquidity.balance_amt:,.0f}원 "
         f"(출금가능액 {liquidity.withdrawable_amt:,.0f}원)\n"
         f"- 최근 순현금흐름: {liquidity.recent_net_cash_flow:,.0f}원 "
         f"(최근 거래 {liquidity.transaction_count}건)\n"
         f"- 금융사별 자산 분포:\n{institutions}\n"
-        f"- 만기 예정 상품:\n{maturities}"
+        f"- 만기 예정 상품:\n{maturities}\n"
+        f"- 카드 승인내역 카테고리별 집계:\n{categories}"
     )
 
 

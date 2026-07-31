@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from app.schemas.signals.asset_distribution import AssetDistributionSignal
+from app.schemas.signals.card_category import CardCategorySignal
 from app.schemas.signals.liquidity import LiquiditySignal
 
 
@@ -10,3 +11,4 @@ class UserSignals(BaseModel):
     user_id: str
     liquidity: LiquiditySignal
     asset_distribution: AssetDistributionSignal
+    card_category: CardCategorySignal

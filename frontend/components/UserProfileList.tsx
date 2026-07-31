@@ -96,6 +96,21 @@ function SignalDetail({ signals }: { signals: UserSignals | null | undefined }) 
           )}
         </div>
       </section>
+
+      <section>
+        <h3 className="mb-1 text-[11px] uppercase tracking-[0.15em] text-muted font-data">
+          카드 실적 (카테고리별)
+        </h3>
+        <div className="divide-y divide-line border-y border-line">
+          {signals.card_category.by_category.length === 0 ? (
+            <Row label="—" value={<span className="text-muted">카드 승인내역 없음</span>} />
+          ) : (
+            signals.card_category.by_category.map((c) => (
+              <Row key={c.category} label={c.category} value={`${c.count}건 · ${won(c.total_amt)}`} />
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }
