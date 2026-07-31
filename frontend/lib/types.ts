@@ -41,6 +41,7 @@ export interface RiskBasis {
   source: string;
   source_key: string; // 원문 PDF(MinIO object key). 재색인 전 조항은 빈 문자열
   page: number | null;
+  quote: string | null; // 근거 원문 인용(검증 통과분만). null이면 하이라이팅 생략
 }
 
 export interface RiskPoint {

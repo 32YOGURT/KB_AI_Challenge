@@ -89,7 +89,7 @@ export default function PdfDocument({
 }: {
   url: string;
   pageNumber: number;
-  query: string;
+  query: string | null;
   width: number;
   onLoadSuccess: (numPages: number) => void;
 }) {

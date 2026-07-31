@@ -24,6 +24,7 @@ class RiskBasis(BaseModel):
     source: str
     source_key: str  # 원문 PDF(MinIO object key). 재색인 전 조항은 빈 문자열
     page: int | None = None
+    quote: str | None = None  # 근거 원문 인용(검증 통과분만). 없으면 프론트가 하이라이팅을 생략
 
 
 class RiskPoint(BaseModel):

@@ -25,8 +25,12 @@ _RISK_REPORT_SCHEMA = {
                             "type": ["integer", "null"],
                             "description": "이 포인트 판단의 근거가 된 [약관 조항] 목록의 번호(1부터 시작). 근거가 되는 조항이 목록에 없으면 null.",
                         },
+                        "evidence_quote": {
+                            "type": ["string", "null"],
+                            "description": "clause_index가 가리키는 조항 원문에서 한 글자도 바꾸지 않고 그대로 가져온 10~40자 내외의 핵심 문장/구절. 요약하거나 다른 말로 바꿔쓰지 않는다. clause_index가 null이면 이것도 null.",
+                        },
                     },
-                    "required": ["text", "clause_index"],
+                    "required": ["text", "clause_index", "evidence_quote"],
                     "additionalProperties": False,
                 },
             },
@@ -44,6 +48,9 @@ _SYSTEM_PROMPT = """당신은 금융 상품 가입 직전 소비자를 보호하
 2. 각 포인트의 clause_index는 [약관 조항] 목록 앞에 붙은 번호([1], [2], ...) 중 하나를 그대로 고른다. 조항 제목이나 내용을 직접 쓰지 않으며, 목록에 없는 번호를 지어내지 않는다.
 3. 해당 포인트의 근거가 되는 조항을 목록에서 찾을 수 없으면 그 포인트의 clause_index는 null로 둔다.
 4. 각 text는 사회 초년생도 바로 이해할 수 있는 쉬운 문장으로 작성한다.
+5. clause_index가 null이 아니면, evidence_quote에 그 조항 원문에서 한 글자도 바꾸지 않고 그대로
+   가져온 10~40자 내외의 핵심 문장/구절을 담는다. 요약하거나 의역하지 않는다. clause_index가
+   null이면 evidence_quote도 null로 둔다.
 """
 
 

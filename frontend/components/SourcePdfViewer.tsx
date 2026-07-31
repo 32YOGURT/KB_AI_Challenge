@@ -98,7 +98,7 @@ export function SourcePdfViewer({ basis }: { basis: RiskBasis | null }) {
             <PdfDocument
               url={url}
               pageNumber={pageNumber}
-              query={basis.clause}
+              query={basis.quote}
               width={pageWidth}
               onLoadSuccess={setNumPages}
             />
@@ -109,7 +109,7 @@ export function SourcePdfViewer({ basis }: { basis: RiskBasis | null }) {
       </div>
 
       {numPages !== null && (
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-[#22262c]/95 px-2 py-1.5 shadow-xl backdrop-blur">
+        <div className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/10 bg-[#22262c]/95 px-2 py-1.5 shadow-xl backdrop-blur">
           <button
             onClick={() => goToPage(Math.max(1, pageNumber - 1))}
             disabled={pageNumber <= 1}
