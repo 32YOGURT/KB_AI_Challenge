@@ -1,11 +1,5 @@
 import type { CheckResponse, RiskBasis } from "@/lib/types";
 
-const LEVEL_META = {
-  RED: { word: "위험", text: "text-risk-red", bar: "bg-risk-red" },
-  YELLOW: { word: "주의", text: "text-risk-yellow", bar: "bg-risk-yellow" },
-  GREEN: { word: "안전", text: "text-risk-green", bar: "bg-risk-green" },
-} as const;
-
 export function RiskVerdictCard({
   report,
   selectedBasis,
@@ -15,13 +9,10 @@ export function RiskVerdictCard({
   selectedBasis: RiskBasis | null;
   onSelectBasis: (basis: RiskBasis) => void;
 }) {
-  const meta = LEVEL_META[report.risk_level];
-
   return (
     <div className="animate-fade-in">
-      <div className={`h-1 w-12 rounded-full ${meta.bar}`} />
+      <div className="h-1 w-12 rounded-full bg-ink" />
       <div className="mt-3 flex items-baseline gap-2">
-        <span className={`text-lg font-semibold ${meta.text}`}>{meta.word}</span>
         <span className="text-[11px] uppercase tracking-[0.2em] text-muted font-data">
           Fin-Guard AI 팩트체크
         </span>
@@ -35,7 +26,7 @@ export function RiskVerdictCard({
           return (
             <li key={i} className="flex gap-3 py-4">
               <span
-                className={`shrink-0 font-semibold transition-all font-data ${meta.text} ${
+                className={`shrink-0 font-semibold transition-all font-data text-ink ${
                   selected ? "text-base" : "text-sm"
                 }`}
               >

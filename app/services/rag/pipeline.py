@@ -39,7 +39,6 @@ def generate_risk_report(subject: CheckSubject, user_id: str) -> CheckResponse:
         product_id=subject.product_id,
         product_name=subject.name,
         user_id=user_id,
-        risk_level=result["risk_level"],
         points=[
             RiskPoint(text=p["text"], basis=_build_basis(p["clause_index"], clauses))
             for p in result["points"]

@@ -6,7 +6,7 @@ from app.clients.openai_client import get_client
 from app.schemas import ClauseChunk, UserSignals
 from app.schemas.check import CheckSubject
 
-LLM_MODEL = "gpt-4o-mini"
+LLM_MODEL = "gpt-4o"
 
 _RISK_REPORT_SCHEMA = {
     "name": "risk_report",
@@ -14,7 +14,6 @@ _RISK_REPORT_SCHEMA = {
     "schema": {
         "type": "object",
         "properties": {
-            "risk_level": {"type": "string", "enum": ["RED", "YELLOW", "GREEN"]},
             "points": {
                 "type": "array",
                 "description": "위험성 팩트체크 포인트. 각 포인트는 문장 설명과, 그 판단의 근거가 된 약관 조항의 번호(있으면)를 함께 담는다.",
@@ -32,7 +31,7 @@ _RISK_REPORT_SCHEMA = {
                 },
             },
         },
-        "required": ["risk_level", "points"],
+        "required": ["points"],
         "additionalProperties": False,
     },
 }
@@ -43,9 +42,8 @@ _SYSTEM_PROMPT = """당신은 'Fin-Guard AI'로, 금융 상품 가입 직전 소
 규칙:
 1. 반드시 risk_report JSON 스키마에 맞춰서만 응답한다. 다른 텍스트는 출력하지 않는다.
 2. 각 포인트의 clause_index는 [약관 조항] 목록 앞에 붙은 번호([1], [2], ...) 중 하나를 그대로 고른다. 조항 제목이나 내용을 직접 쓰지 않으며, 목록에 없는 번호를 지어내지 않는다.
-3. 해당 포인트의 근거가 되는 조항을 목록에서 찾을 수 없으면 그 포인트의 clause_index는 null로 둔다. 모든 포인트의 근거를 찾을 수 없으면 risk_level은 GREEN으로 판단한다.
-4. =각 text는 사회 초년생도 바로 이해할 수 있는 쉬운 문장으로 작성한다.
-5. risk_level 기준: RED는 중도해지 페널티/원금 손실 등 심각한 금전적 손해, YELLOW는 우대조건 미달 등 기대보다 낮은 혜택, GREEN은 특이 위험 없음.
+3. 해당 포인트의 근거가 되는 조항을 목록에서 찾을 수 없으면 그 포인트의 clause_index는 null로 둔다.
+4. 각 text는 사회 초년생도 바로 이해할 수 있는 쉬운 문장으로 작성한다.
 """
 
 

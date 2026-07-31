@@ -1,5 +1,3 @@
-export type RiskLevel = "RED" | "YELLOW" | "GREEN";
-
 export interface UserProfile {
   id: string;
   display_name: string;
@@ -54,7 +52,6 @@ export interface CheckResponse {
   product_id: string;
   product_name: string;
   user_id: string;
-  risk_level: RiskLevel;
   points: RiskPoint[];
 }
 

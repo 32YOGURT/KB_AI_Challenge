@@ -1,5 +1,3 @@
-from typing import Literal
-
 from pydantic import BaseModel
 
 
@@ -37,5 +35,4 @@ class CheckResponse(BaseModel):
     product_id: str
     product_name: str
     user_id: str
-    risk_level: Literal["RED", "YELLOW", "GREEN"]
     points: list[RiskPoint]
