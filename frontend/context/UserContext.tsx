@@ -28,6 +28,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const initial = fetched.find((u) => u.id === stored)?.id ?? fetched[0]?.id ?? null;
         setActiveUserIdState(initial);
       })
+      .catch(() => setUsers([])) // 백엔드가 죽어있어도 unhandledRejection 대신 안내 화면으로
       .finally(() => setLoading(false));
   }, []);
 

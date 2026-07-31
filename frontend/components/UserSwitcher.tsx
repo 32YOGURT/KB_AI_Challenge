@@ -6,7 +6,7 @@ export function UserSwitcher() {
   const { users, activeUser, setActiveUserId, loading } = useUser();
 
   if (loading) {
-    return <div className="h-16 w-64 animate-pulse rounded bg-white/10" />;
+    return <div className="h-8 w-56 animate-pulse rounded-full bg-white/10" />;
   }
 
   return (

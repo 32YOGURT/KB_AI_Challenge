@@ -5,11 +5,13 @@ docker-compose.yml로 로컬 기동 시 기본값 사용 (http://localhost:9000)
 
 from __future__ import annotations
 
+from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from minio import Minio
+from minio.error import S3Error
 
 from app.config import MINIO_BUCKET_NAME, MINIO_ENDPOINT_URL, MINIO_ROOT_PASSWORD, MINIO_ROOT_USER
 
@@ -32,3 +34,17 @@ def download_to_path(key: str, dest: Path) -> None:
     """key로 저장된 객체를 dest 경로에 내려받는다 (부모 디렉터리는 자동 생성)."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     get_client().fget_object(MINIO_BUCKET_NAME, key, str(dest))
+
+
+def presign_get(key: str, expires: timedelta) -> str | None:
+    """브라우저가 직접 PDF를 받아갈 수 있는 임시 URL을 발급한다. 객체가 없으면 None.
+
+    presigned_get_object는 객체 존재를 확인하지 않아서, 없는 key에도 나중에 404를 뱉는
+    URL을 만들어준다 — 호출부가 바로 404를 줄 수 있게 stat_object로 먼저 확인한다.
+    """
+    client = get_client()
+    try:
+        client.stat_object(MINIO_BUCKET_NAME, key)
+    except S3Error:
+        return None
+    return client.presigned_get_object(MINIO_BUCKET_NAME, key, expires=expires)

@@ -18,6 +18,9 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      # 프론트가 presigned URL로 PDF를 직접 받아간다. presigned URL 자체가 서명+만료로
+      # 접근을 통제하므로 로컬 데모에선 origin을 열어둔다.
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"

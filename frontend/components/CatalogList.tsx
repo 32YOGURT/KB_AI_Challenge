@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
 import type { CatalogProduct } from "@/lib/types";
-import { SignupFlow } from "./SignupFlow";
 
 function groupBy(products: CatalogProduct[], key: (p: CatalogProduct) => string): Map<string, CatalogProduct[]> {
   const groups = new Map<string, CatalogProduct[]>();
@@ -16,6 +17,8 @@ function groupBy(products: CatalogProduct[], key: (p: CatalogProduct) => string)
 }
 
 export function CatalogList({ products }: { products: CatalogProduct[] }) {
+  const router = useRouter();
+  const { activeUser } = useUser();
   const subCategoryGroups = groupBy(products, (p) => p.sub_category);
   const subCategories = [...subCategoryGroups.keys()];
   const [activeSub, setActiveSub] = useState(subCategories[0]);
@@ -83,7 +86,13 @@ export function CatalogList({ products }: { products: CatalogProduct[] }) {
               <span className="block font-medium text-ink">{p.name}</span>
               <span className="mt-0.5 block text-sm text-muted">{p.bank}</span>
             </a>
-            <SignupFlow productId={p.product_id} compact />
+            <button
+              onClick={() => router.push(`/check/${p.product_id}`)}
+              disabled={!activeUser}
+              className="shrink-0 rounded-full border border-brand/30 bg-brand/5 px-3.5 py-1.5 text-xs font-semibold text-brand transition-colors hover:bg-brand/10 disabled:opacity-50"
+            >
+              AI에게 물어보기
+            </button>
           </li>
         ))}
       </ul>

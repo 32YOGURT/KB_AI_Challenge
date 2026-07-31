@@ -16,6 +16,7 @@ class ClauseChunk(BaseModel):
     text: str
     source: str
     source_file: str
+    source_key: str = ""
     page: int | None = None
     effective_date: str | None = None
     content_hash: str

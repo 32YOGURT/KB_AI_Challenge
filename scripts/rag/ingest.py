@@ -113,6 +113,7 @@ def build_chunks(entry: dict) -> list[ClauseChunk]:
                     text=text,
                     source=f"{label} {clause_title}",
                     source_file=source_file,
+                    source_key=entry["saved_path"],
                     page=c["page"],
                     effective_date=effective_date,
                     content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),

@@ -1,4 +1,4 @@
-import type { CheckResponse } from "@/lib/types";
+import type { CheckResponse, RiskBasis } from "@/lib/types";
 
 const LEVEL_META = {
   RED: { word: "위험", border: "border-risk-red", badge: "border-risk-red text-risk-red", tint: "bg-risk-red-soft" },
@@ -6,7 +6,15 @@ const LEVEL_META = {
   GREEN: { word: "안전", border: "border-risk-green", badge: "border-risk-green text-risk-green", tint: "bg-risk-green-soft" },
 } as const;
 
-export function RiskVerdictCard({ report }: { report: CheckResponse }) {
+export function RiskVerdictCard({
+  report,
+  selectedBasis,
+  onSelectBasis,
+}: {
+  report: CheckResponse;
+  selectedBasis: RiskBasis | null;
+  onSelectBasis: (basis: RiskBasis) => void;
+}) {
   const meta = LEVEL_META[report.risk_level];
 
   return (
@@ -31,13 +39,31 @@ export function RiskVerdictCard({ report }: { report: CheckResponse }) {
             >
               {i + 1}
             </span>
-            <div>
+            <div className="min-w-0">
               <p>{point.text}</p>
-              {point.basis && (
-                <p className="mt-1 text-[11px] leading-relaxed text-muted font-data">
-                  근거 · {point.basis.source} — &ldquo;{point.basis.clause}&rdquo;
-                </p>
-              )}
+              {point.basis &&
+                (point.basis.source_key ? (
+                  <button
+                    onClick={() => onSelectBasis(point.basis!)}
+                    className={`mt-1.5 block w-full rounded-sm border px-2.5 py-1.5 text-left text-[11px] leading-relaxed transition-colors font-data ${
+                      selectedBasis === point.basis
+                        ? "border-brand/40 bg-brand/5 text-brand"
+                        : "border-line text-muted hover:border-brand/30 hover:text-ink"
+                    }`}
+                  >
+                    <span className="block truncate">
+                      근거 · {point.basis.source}
+                      {point.basis.page && ` ${point.basis.page}p`}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] opacity-70">
+                      {selectedBasis === point.basis ? "◀ 원문에서 보는 중" : "원문 보기 ◀"}
+                    </span>
+                  </button>
+                ) : (
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted font-data">
+                    근거 · {point.basis.source}
+                  </p>
+                ))}
             </div>
           </li>
         ))}

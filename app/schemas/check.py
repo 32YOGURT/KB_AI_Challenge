@@ -24,6 +24,8 @@ class CheckSubject(BaseModel):
 class RiskBasis(BaseModel):
     clause: str
     source: str
+    source_key: str  # 원문 PDF(MinIO object key). 재색인 전 조항은 빈 문자열
+    page: int | None = None
 
 
 class RiskPoint(BaseModel):

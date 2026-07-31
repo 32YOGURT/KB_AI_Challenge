@@ -1,4 +1,4 @@
-import type { CatalogProduct, CheckResponse, UserProfile } from "./types";
+import type { CatalogProduct, CheckResponse, PresignedDocument, UserProfile } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -23,6 +23,10 @@ export function checkProduct(productId: string, userId: string): Promise<CheckRe
     method: "POST",
     body: JSON.stringify({ product_id: productId, user_id: userId }),
   });
+}
+
+export function presignDocument(key: string): Promise<PresignedDocument> {
+  return request<PresignedDocument>(`/api/documents/presign?key=${encodeURIComponent(key)}`);
 }
 
 export function fetchCatalog(category?: string): Promise<CatalogProduct[]> {

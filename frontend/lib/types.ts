@@ -8,6 +8,8 @@ export interface UserProfile {
 export interface RiskBasis {
   clause: string;
   source: string;
+  source_key: string; // 원문 PDF(MinIO object key). 재색인 전 조항은 빈 문자열
+  page: number | null;
 }
 
 export interface RiskPoint {
@@ -21,6 +23,11 @@ export interface CheckResponse {
   user_id: string;
   risk_level: RiskLevel;
   points: RiskPoint[];
+}
+
+export interface PresignedDocument {
+  url: string;
+  expires_in: number;
 }
 
 // app/schemas/catalog.py 미러링 — 크롤러가 만드는 상품 카탈로그 한 건.
