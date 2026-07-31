@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -28,6 +30,7 @@ class RiskBasis(BaseModel):
 
 
 class RiskPoint(BaseModel):
+    type: Literal["description", "risk"]
     text: str
     detail: str
     basis: RiskBasis | None = None

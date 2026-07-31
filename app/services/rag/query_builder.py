@@ -57,11 +57,14 @@ _MATURITY_SOON_DAYS = 30
 
 def _general_queries(category: str) -> list[SearchQuery]:
     axes = _CATEGORY_AXIS_TEMPLATES.get(category, _DEFAULT_AXES)
-    return [SearchQuery(text=axis, doc_types=_RISK_DOC_TYPES) for axis in axes]
+    return [SearchQuery(text=axis, doc_types=_RISK_DOC_TYPES, tier="general") for axis in axes]
 
 
 def _description_queries() -> list[SearchQuery]:
-    return [SearchQuery(text=axis, doc_types=_DESCRIPTION_DOC_TYPES) for axis in _DESCRIPTION_AXES]
+    return [
+        SearchQuery(text=axis, doc_types=_DESCRIPTION_DOC_TYPES, tier="description")
+        for axis in _DESCRIPTION_AXES
+    ]
 
 
 def _user_specific_queries(signals: UserSignals) -> list[SearchQuery]:
@@ -70,21 +73,39 @@ def _user_specific_queries(signals: UserSignals) -> list[SearchQuery]:
     dist = signals.asset_distribution
 
     if liquidity.balance_amt < _LOW_BALANCE_THRESHOLD or liquidity.recent_net_cash_flow < 0:
-        queries.append(SearchQuery(text="중도해지 중도해지이율 긴급출금"))
+        reason = (
+            f"유동성 부족(잔액 {liquidity.balance_amt:,.0f}원, "
+            f"최근 순현금흐름 {liquidity.recent_net_cash_flow:,.0f}원)"
+        )
+        queries.append(SearchQuery(text="중도해지 중도해지이율 긴급출금", tier="user_specific", reason=reason))
 
-    if any(inst.is_over_protection_limit for inst in dist.by_institution):
-        queries.append(SearchQuery(text="예금자보호 보호한도"))
+    over_limit = [inst for inst in dist.by_institution if inst.is_over_protection_limit]
+    if over_limit:
+        reason = "예금자보호 한도 초과(" + ", ".join(
+            f"{inst.org_code} 잔액 {inst.total_balance:,.0f}원" for inst in over_limit
+        ) + ")"
+        queries.append(SearchQuery(text="예금자보호 보호한도", tier="user_specific", reason=reason))
 
     today = datetime.now()
-    if any(
-        0 <= (datetime.strptime(m.exp_date, "%Y%m%d") - today).days <= _MATURITY_SOON_DAYS
+    soon = [
+        m
         for m in dist.upcoming_maturities
-    ):
-        queries.append(SearchQuery(text="만기 만기해지 만기후이율 자동재예치"))
+        if 0 <= (datetime.strptime(m.exp_date, "%Y%m%d") - today).days <= _MATURITY_SOON_DAYS
+    ]
+    if soon:
+        reason = "만기 임박 상품 보유(" + ", ".join(f"{m.prod_name} {m.exp_date} 만기" for m in soon) + ")"
+        queries.append(
+            SearchQuery(text="만기 만기해지 만기후이율 자동재예치", tier="user_specific", reason=reason)
+        )
 
     transit = next((c for c in signals.card_category.by_category if c.category == "대중교통"), None)
     if transit is None or transit.count == 0:
-        queries.append(SearchQuery(text="실적조건 대중교통 이용실적 우대금리 조건"))
+        reason = "최근 대중교통 이용 실적 0건(카드 승인내역 기준)"
+        queries.append(
+            SearchQuery(
+                text="실적조건 대중교통 이용실적 우대금리 조건", tier="user_specific", reason=reason
+            )
+        )
 
     return queries
 

@@ -30,7 +30,7 @@ from qdrant_client.models import (
 )
 
 from app.clients.qdrant_client import get_client
-from app.schemas import ClauseChunk, ClauseSearchResult, SearchQuery
+from app.schemas import ClauseChunk, ClauseSearchResult, MatchedClause, SearchQuery
 from app.services.rag.embeddings import EMBEDDING_DIM, embed_text, embed_texts
 from app.services.rag.sparse import to_sparse_vector
 
@@ -165,17 +165,18 @@ def search_clauses_multi(
     queries: list[SearchQuery],
     top_k_per_query: int = 2,
     mode: SearchMode = "hybrid",
-) -> list[ClauseSearchResult]:
-    """위험 축마다(query_builder.build_search_queries) 개별로 search_clauses를 돌리고 병합한다.
+) -> list[MatchedClause]:
+    """축마다(query_builder.build_search_queries) 개별로 search_clauses를 돌리고 병합한다.
 
     같은 조항이 여러 축에 걸리는 경우가 실제로 있다(예: "중도해지이율 및 만기후이율"
-    조항은 중도해지 축과 만기 축 양쪽에 매치될 수 있음). content_hash로 dedup하고,
-    겹치면 더 높은 점수 쪽을 남긴다. 최종 정렬은 점수 내림차순.
+    조항은 중도해지 축과 만기 축 양쪽에 매치될 수 있음). content_hash로 dedup하되, 점수만
+    남기지 않고 매치된 모든 tier/reason을 누적한다 — LLM 프롬프트에서 "이 조항이 왜
+    검색됐는지"를 그대로 라벨로 보여주기 위함(query_builder의 user_specific reason 등).
 
     모든 축이 같은 mode로 검색되므로 점수 비교/정렬은 일관된 스케일 안에서 이뤄진다
     (mode별 점수 스케일 차이는 search_clauses docstring 참고).
     """
-    best: dict[str, ClauseSearchResult] = {}
+    best: dict[str, MatchedClause] = {}
     for query in queries:
         for result in search_clauses(
             product_id=product_id,
@@ -186,6 +187,17 @@ def search_clauses_multi(
             doc_types=query.doc_types,
         ):
             existing = best.get(result.content_hash)
-            if existing is None or result.score > existing.score:
-                best[result.content_hash] = result
-    return sorted(best.values(), key=lambda r: r.score, reverse=True)
+            if existing is None:
+                best[result.content_hash] = MatchedClause(
+                    clause=result,
+                    tiers=[query.tier],
+                    reasons=[query.reason] if query.reason else [],
+                )
+                continue
+            if result.score > existing.clause.score:
+                existing.clause = result
+            if query.tier not in existing.tiers:
+                existing.tiers.append(query.tier)
+            if query.reason and query.reason not in existing.reasons:
+                existing.reasons.append(query.reason)
+    return sorted(best.values(), key=lambda m: m.clause.score, reverse=True)

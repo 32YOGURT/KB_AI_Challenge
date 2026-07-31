@@ -1,6 +1,6 @@
 import re
 
-from app.schemas import CheckResponse, ClauseSearchResult, RiskBasis, RiskPoint
+from app.schemas import CheckResponse, MatchedClause, RiskBasis, RiskPoint
 from app.schemas.check import CheckSubject
 from app.services.mydata.user_signals import get_user_signals
 from app.services.rag.llm_inference import infer_risk_report
@@ -26,7 +26,7 @@ def _verify_quote(quote: str | None, chunk_text: str) -> str | None:
 
 
 def _build_basis(
-    clause_index: int | None, quote: str | None, clauses: list[ClauseSearchResult]
+    clause_index: int | None, quote: str | None, clauses: list[MatchedClause]
 ) -> RiskBasis | None:
     """LLM이 고른 번호(1-based)로 실제 조항을 찾아 근거를 조립한다.
 
@@ -35,7 +35,7 @@ def _build_basis(
     """
     if clause_index is None or not 1 <= clause_index <= len(clauses):
         return None
-    chunk = clauses[clause_index - 1]
+    chunk = clauses[clause_index - 1].clause
     return RiskBasis(
         clause=chunk.clause_title,
         source=chunk.source,
@@ -63,6 +63,7 @@ def generate_risk_report(subject: CheckSubject, user_id: str) -> CheckResponse:
         user_id=user_id,
         points=[
             RiskPoint(
+                type=p["type"],
                 text=p["text"],
                 detail=p["detail"],
                 basis=_build_basis(p["clause_index"], p["evidence_quote"], clauses),

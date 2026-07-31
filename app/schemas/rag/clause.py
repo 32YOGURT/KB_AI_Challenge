@@ -25,3 +25,15 @@ class ClauseChunk(BaseModel):
 
 class ClauseSearchResult(ClauseChunk):
     score: float
+
+
+class MatchedClause(BaseModel):
+    """search_clauses_multi 결과 항목. 같은 조항이 여러 축에서 매치되면 tiers/reasons가 누적된다.
+
+    reasons는 유저특화 축(query.reason)에서만 채워진다 — 일반/상품설명서 축은 유저 신호와
+    무관한 고정 축이라 "왜 검색됐는지" 설명이 필요 없다.
+    """
+
+    clause: ClauseSearchResult
+    tiers: list[str]
+    reasons: list[str]

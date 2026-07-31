@@ -56,6 +56,7 @@ export interface RiskBasis {
 }
 
 export interface RiskPoint {
+  type: "description" | "risk";
   text: string;
   detail: string;
   basis: RiskBasis | null;
