@@ -48,14 +48,6 @@ body {
   font-family: var(--font-portal), "Malgun Gothic", sans-serif;
 }
 
-/* pdf.js 텍스트 레이어는 글자가 투명이라, 근거 조항 하이라이트는 아래 캔버스 글자가
-   비치도록 반투명으로 깔고 UA 기본 노란 배경/검정 글자를 덮어쓴다. */
-.react-pdf__Page__textContent mark {
-  background-color: color-mix(in srgb, var(--gold) 40%, transparent);
-  color: transparent;
-  border-radius: 2px;
-}
-
 @keyframes scan-sweep {
   0% {
     transform: translateY(-100%);

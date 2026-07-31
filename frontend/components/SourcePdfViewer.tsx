@@ -98,7 +98,8 @@ export function SourcePdfViewer({ basis }: { basis: RiskBasis | null }) {
             <PdfDocument
               url={url}
               pageNumber={pageNumber}
-              query={basis.quote}
+              clause={basis.clause}
+              quote={basis.quote}
               width={pageWidth}
               onLoadSuccess={setNumPages}
             />
