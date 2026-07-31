@@ -15,8 +15,9 @@ kiwipiepy
 # Vector DB
 qdrant-client
 
-# Object storage (크롤링한 PDF 원본)
+# Object storage (크롤링한 PDF 원본). minio=로컬 docker-compose, boto3=배포(AWS S3)
 minio
+boto3
 
 # PDF parsing
 pdfplumber

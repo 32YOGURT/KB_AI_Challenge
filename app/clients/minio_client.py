@@ -5,6 +5,7 @@ docker-compose.yml로 로컬 기동 시 기본값 사용 (http://localhost:9000)
 
 from __future__ import annotations
 
+import io
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -34,6 +35,13 @@ def download_to_path(key: str, dest: Path) -> None:
     """key로 저장된 객체를 dest 경로에 내려받는다 (부모 디렉터리는 자동 생성)."""
     dest.parent.mkdir(parents=True, exist_ok=True)
     get_client().fget_object(MINIO_BUCKET_NAME, key, str(dest))
+
+
+def upload_bytes(content: bytes, key: str, content_type: str) -> None:
+    """바이트를 key로 업로드한다 (크롤러가 받아온 PDF 원본 저장용)."""
+    get_client().put_object(
+        MINIO_BUCKET_NAME, key, io.BytesIO(content), length=len(content), content_type=content_type
+    )
 
 
 def presign_get(key: str, expires: timedelta) -> str | None:

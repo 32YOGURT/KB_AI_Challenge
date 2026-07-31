@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from app.clients import minio_client  # noqa: E402
+from app.clients import object_storage  # noqa: E402
 from app.schemas import ClauseChunk  # noqa: E402
 from app.services.rag.embeddings import split_for_embedding  # noqa: E402
 from app.services.rag.retrieval import drop_collection, upsert_clauses  # noqa: E402
@@ -54,7 +54,7 @@ def _local_pdf_path(entry: dict) -> Path:
 def _ensure_pdf_downloaded(entry: dict) -> Path:
     pdf_path = _local_pdf_path(entry)
     if not pdf_path.exists():
-        minio_client.download_to_path(entry["saved_path"], pdf_path)
+        object_storage.download_to_path(entry["saved_path"], pdf_path)
     return pdf_path
 
 _TABLE_ROW_RE = re.compile(r"^\|[-:\s|]+\|$", re.MULTILINE)

@@ -25,7 +25,6 @@ adapter가 구현해야 하는 인터페이스는 Adapter 참고.
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import re
 from dataclasses import dataclass
@@ -35,8 +34,7 @@ from typing import Callable, Iterator, Protocol
 
 from playwright.sync_api import Page, sync_playwright
 
-from app.clients import minio_client
-from app.config import MINIO_BUCKET_NAME
+from app.clients import object_storage
 
 from . import manifest
 
@@ -124,15 +122,9 @@ def _object_key(company: str, category: str, raw_title: str) -> str:
 
 
 def _upload_bytes(content: bytes, company: str, category: str, raw_title: str) -> str:
-    """PDF 바이트를 MinIO에 올리고 object key를 돌려준다."""
+    """PDF 바이트를 객체 스토리지에 올리고 object key를 돌려준다."""
     key = _object_key(company, category, raw_title)
-    minio_client.get_client().put_object(
-        MINIO_BUCKET_NAME,
-        key,
-        io.BytesIO(content),
-        length=len(content),
-        content_type="application/pdf",
-    )
+    object_storage.upload_bytes(content, key, "application/pdf")
     return key
 
 

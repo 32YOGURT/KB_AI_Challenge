@@ -2,13 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import catalog, check, documents, mydata, users
+from app.config import ALLOWED_ORIGINS
 
 app = FastAPI(title="Fin-Guard AI API")
 
 app.add_middleware(
     CORSMiddleware,
-    # worktree를 여러 개 띄우면 Next dev 서버가 3001, 3002...로 밀려서 포트를 고정할 수 없다.
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

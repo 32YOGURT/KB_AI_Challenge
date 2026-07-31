@@ -78,7 +78,7 @@ export function SourcePdfViewer({ basis }: { basis: RiskBasis | null }) {
         <p className="text-center text-sm text-white/70">
           원문 문서를 찾을 수 없습니다.
           <br />
-          MinIO에 해당 PDF가 있는지 확인해주세요.
+          객체 스토리지에 해당 PDF가 있는지 확인해주세요.
         </p>
       </Stage>
     );
