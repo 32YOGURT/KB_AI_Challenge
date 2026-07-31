@@ -34,20 +34,30 @@ export function RiskVerdictCard({
 
           return (
             <li key={i} className="flex gap-3 py-4">
-              <span className={`shrink-0 text-sm font-semibold font-data ${meta.text}`}>
+              <span
+                className={`shrink-0 font-semibold transition-all font-data ${meta.text} ${
+                  selected ? "text-base" : "text-sm"
+                }`}
+              >
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm leading-relaxed text-ink">{point.text}</p>
+                <p
+                  className={`leading-relaxed transition-all ${
+                    selected ? "text-base font-medium text-ink" : "text-sm text-ink/70"
+                  }`}
+                >
+                  {point.text}
+                </p>
 
                 {basis &&
                   (basis.source_key ? (
                     <button
                       onClick={() => onSelectBasis(basis)}
-                      className={`mt-1.5 block max-w-full truncate text-left text-[11px] underline decoration-dotted underline-offset-4 transition-colors font-data ${
+                      className={`mt-1.5 block max-w-full truncate text-left underline decoration-dotted underline-offset-4 transition-all font-data ${
                         selected
-                          ? "text-brand decoration-brand/50"
-                          : "text-muted decoration-line hover:text-brand"
+                          ? "text-[13px] font-medium text-brand decoration-brand/50"
+                          : "text-[11px] text-muted decoration-line hover:text-brand"
                       }`}
                     >
                       {selected ? "◀ " : ""}

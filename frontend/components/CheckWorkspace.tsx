@@ -187,23 +187,6 @@ export function CheckWorkspace({ productId }: { productId: string }) {
             selectedBasis={selectedBasis}
             onSelectBasis={(basis) => runId && setPicked({ runId, basis })}
           />
-
-          <div className="mt-6 flex flex-col gap-2">
-            <button onClick={() => router.back()} className={ACTION_BUTTON}>
-              ◀ 다시 생각하기
-            </button>
-            <button
-              onClick={() => runId && setConfirmedRunId(runId)}
-              className={ACTION_BUTTON}
-            >
-              위험 감수하고 계속하기 ➔
-            </button>
-          </div>
-          {confirmedRunId === runId && (
-            <p className="animate-fade-in mt-2 text-center text-xs text-muted font-data">
-              (데모) 실제 가입은 은행 홈페이지에서 진행됩니다.
-            </p>
-          )}
         </aside>
       </div>
     </div>
