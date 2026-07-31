@@ -19,9 +19,6 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const ACTION_BUTTON =
-  "rounded-sm border border-line px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-paper";
-
 // 원문 PDF를 보고 돌아왔을 때 스캔(=LLM 호출)을 다시 돌리지 않도록 결과를 세션에 남긴다.
 // 유저를 전환하면 키가 달라져서 새로 판정된다.
 function readCache(key: string): CheckResponse | null {
@@ -50,7 +47,6 @@ export function CheckWorkspace({ productId }: { productId: string }) {
     report: CheckResponse;
   } | null>(null);
   const [errorRunId, setErrorRunId] = useState<string | null>(null);
-  const [confirmedRunId, setConfirmedRunId] = useState<string | null>(null);
   const [picked, setPicked] = useState<{
     runId: string;
     basis: RiskBasis;

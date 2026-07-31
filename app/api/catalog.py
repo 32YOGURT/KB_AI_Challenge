@@ -7,5 +7,5 @@ router = APIRouter(prefix="/api", tags=["catalog"])
 
 
 @router.get("/catalog/products", response_model=list[CatalogProduct])
-def get_catalog_products(category: str | None = Query(None)) -> list[CatalogProduct]:
-    return list_catalog_products(category)
+def get_catalog_products(product_type: str | None = Query(None)) -> list[CatalogProduct]:
+    return list_catalog_products(product_type)

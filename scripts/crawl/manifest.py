@@ -47,6 +47,7 @@ def append_entry(
     *,
     company: str,
     doc_type: str | None,
+    product_type: str,
     category: str,
     sub_category: str | None,
     raw_title: str,
@@ -69,6 +70,7 @@ def append_entry(
     new_entry = {
         "company": company,
         "doc_type": doc_type,
+        "product_type": product_type,
         "category": category,
         "sub_category": sub_category,
         "raw_title": raw_title,

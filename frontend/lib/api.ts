@@ -29,7 +29,7 @@ export function presignDocument(key: string): Promise<PresignedDocument> {
   return request<PresignedDocument>(`/api/documents/presign?key=${encodeURIComponent(key)}`);
 }
 
-export function fetchCatalog(category?: string): Promise<CatalogProduct[]> {
-  const query = category ? `?category=${encodeURIComponent(category)}` : "";
+export function fetchCatalog(productType?: string): Promise<CatalogProduct[]> {
+  const query = productType ? `?product_type=${encodeURIComponent(productType)}` : "";
   return request<CatalogProduct[]>(`/api/catalog/products${query}`);
 }

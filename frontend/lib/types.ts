@@ -35,7 +35,8 @@ export interface CatalogProduct {
   product_id: string;
   bank: string;
   name: string;
-  category: string;
+  product_type: string; // 은행 무관 정규 분류
+  category: string; // 은행 사이트 원문 분류
   sub_category: string;
   source_url: string;
 }

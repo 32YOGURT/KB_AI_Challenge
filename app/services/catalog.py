@@ -23,12 +23,13 @@ def load_catalog() -> dict[str, CatalogProduct]:
     catalog: dict[str, CatalogProduct] = {}
     for doc in _load_manifest():
         product_id = doc.get("product_id")
-        if not product_id or product_id in catalog:
+        if not product_id or product_id in catalog or not doc.get("product_type"):
             continue
         catalog[product_id] = CatalogProduct(
             product_id=product_id,
             bank=doc["company"],
             name=doc["product_name"],
+            product_type=doc["product_type"],
             category=doc["category"],
             sub_category=doc["sub_category"],
             source_url=doc["source_page_url"],
@@ -36,10 +37,10 @@ def load_catalog() -> dict[str, CatalogProduct]:
     return catalog
 
 
-def list_catalog_products(category: str | None = None) -> list[CatalogProduct]:
+def list_catalog_products(product_type: str | None = None) -> list[CatalogProduct]:
     products = list(load_catalog().values())
-    if category:
-        products = [p for p in products if p.category == category]
+    if product_type:
+        products = [p for p in products if p.product_type == product_type]
     return products
 
 

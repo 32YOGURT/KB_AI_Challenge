@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CATEGORY_SLUGS } from "@/lib/categories";
+import { PRODUCT_TYPE_SLUGS } from "@/lib/categories";
 import { UserSwitcher } from "./UserSwitcher";
 
 export function Header() {
@@ -21,7 +21,7 @@ export function Header() {
               금융상품<span className="text-gold">한눈에</span>
             </Link>
             <nav className="hidden flex-wrap gap-x-5 gap-y-1 text-sm text-white/70 lg:flex">
-              {Object.entries(CATEGORY_SLUGS).map(([slug, label]) => {
+              {Object.entries(PRODUCT_TYPE_SLUGS).map(([slug, label]) => {
                 const href = `/products/${slug}`;
                 return (
                   <Link

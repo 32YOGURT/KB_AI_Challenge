@@ -141,7 +141,7 @@ COMMON_DOC_STORAGE_CATEGORY = "_common"
 
 
 def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
-    """config/{은행}.json의 한 항목(company/doc_type/category/url/adapter)을 처리한다.
+    """config/{은행}.json의 한 항목(company/doc_type/product_type/category/url/adapter)을 처리한다.
 
     seen_hashes: content sha256 -> 그 내용으로 이미 업로드된 MinIO object key. run() 전체에서
     하나를 공유해서, 이 실행 중 어디서든 내용이 같은 파일을 다시 받으면(예: KB/신한처럼
@@ -177,6 +177,7 @@ def crawl_entry(entry: dict, page: Page, seen_hashes: dict[str, str]) -> None:
         manifest.append_entry(
             company=entry["company"],
             doc_type=trigger.doc_type,
+            product_type=entry["product_type"],
             category=entry["category"],
             sub_category=entry.get("sub_category"),
             raw_title=trigger.raw_title,

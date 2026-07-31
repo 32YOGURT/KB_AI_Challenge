@@ -5,70 +5,40 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/context/UserContext";
 import type { CatalogProduct } from "@/lib/types";
 
-function groupBy(products: CatalogProduct[], key: (p: CatalogProduct) => string): Map<string, CatalogProduct[]> {
-  const groups = new Map<string, CatalogProduct[]>();
-  for (const p of products) {
-    const k = key(p);
-    const list = groups.get(k) ?? [];
-    list.push(p);
-    groups.set(k, list);
-  }
-  return groups;
-}
-
 export function CatalogList({ products }: { products: CatalogProduct[] }) {
   const router = useRouter();
   const { activeUser } = useUser();
-  const subCategoryGroups = groupBy(products, (p) => p.sub_category);
-  const subCategories = [...subCategoryGroups.keys()];
-  const [activeSub, setActiveSub] = useState(subCategories[0]);
-
-  const banks = [...groupBy(products, (p) => p.bank).keys()];
   const [activeBank, setActiveBank] = useState<string | null>(null);
 
-  const items = products.filter(
-    (p) => p.sub_category === activeSub && (activeBank === null || p.bank === activeBank),
-  );
+  const banks = [...new Set(products.map((p) => p.bank))];
+  const items = activeBank === null ? products : products.filter((p) => p.bank === activeBank);
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-line pb-1">
-        <div className="flex flex-wrap gap-1">
-          {subCategories.map((sub) => (
-            <button
-              key={sub}
-              onClick={() => setActiveSub(sub)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors ${
-                activeSub === sub ? "border-b-2 border-brand text-brand" : "text-muted hover:text-ink"
-              }`}
-            >
-              {sub}
-              <span className="ml-1 text-xs text-muted">{subCategoryGroups.get(sub)!.length}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 pb-1.5">
+      <div className="mb-3 flex flex-wrap items-center gap-1.5 border-b border-line pb-3">
+        <button
+          onClick={() => setActiveBank(null)}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            activeBank === null ? "bg-brand/10 text-brand" : "text-muted hover:text-ink"
+          }`}
+        >
+          전체 은행
+          <span className="ml-1 opacity-60">{products.length}</span>
+        </button>
+        {banks.map((bank) => (
           <button
-            onClick={() => setActiveBank(null)}
+            key={bank}
+            onClick={() => setActiveBank(bank)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              activeBank === null ? "bg-brand/10 text-brand" : "text-muted hover:text-ink"
+              activeBank === bank ? "bg-brand/10 text-brand" : "text-muted hover:text-ink"
             }`}
           >
-            전체 은행
+            {bank}
+            <span className="ml-1 opacity-60">
+              {products.filter((p) => p.bank === bank).length}
+            </span>
           </button>
-          {banks.map((bank) => (
-            <button
-              key={bank}
-              onClick={() => setActiveBank(bank)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                activeBank === bank ? "bg-brand/10 text-brand" : "text-muted hover:text-ink"
-              }`}
-            >
-              {bank}
-            </button>
-          ))}
-        </div>
+        ))}
       </div>
 
       <ul className="overflow-hidden rounded-sm border border-line bg-panel">
