@@ -9,6 +9,9 @@ httpx
 openai
 tiktoken
 
+# 한국어 형태소 분석 (하이브리드 검색의 sparse/BM25 토크나이저)
+kiwipiepy
+
 # Vector DB
 qdrant-client
 
