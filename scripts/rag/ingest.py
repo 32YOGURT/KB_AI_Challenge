@@ -10,6 +10,7 @@ doc_type별 분기:
 
 사용법:
     python scripts/rag/ingest.py                        # 전체 인덱싱 (임베딩 API 호출 발생)
+    python scripts/rag/ingest.py --recreate             # 컬렉션 삭제 후 재생성하며 인덱싱
     python scripts/rag/ingest.py --category 예금,적금    # 해당 카테고리만 인덱싱
     python scripts/rag/ingest.py --dry-run              # 임베딩/업서트 없이 청킹 결과만 출력
     python scripts/rag/ingest.py --limit 20             # 앞 N개 manifest 엔트리만 처리 (검증용)
@@ -32,7 +33,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 from app.schemas import ClauseChunk  # noqa: E402
 from app.services.rag.embeddings import split_for_embedding  # noqa: E402
-from app.services.rag.retrieval import upsert_clauses  # noqa: E402
+from app.services.rag.retrieval import drop_collection, upsert_clauses  # noqa: E402
 from scripts.crawl.manifest import CRAWLED_DATA_DIR, MANIFEST_PATH  # noqa: E402
 from scripts.rag.clause_chunker import chunk_clauses  # noqa: E402
 from scripts.rag.section_chunker import chunk_sections  # noqa: E402
@@ -140,6 +141,11 @@ def _filter_products(parser: argparse.ArgumentParser, entries: list[dict], args)
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="임베딩/업서트 없이 청킹 결과만 출력")
+    parser.add_argument(
+        "--recreate",
+        action="store_true",
+        help="색인 전에 기존 컬렉션을 삭제하고 새로 만든다 (벡터 스키마가 바뀌었을 때 필요)",
+    )
     parser.add_argument("--limit", type=int, default=None, help="앞 N개 manifest 엔트리만 처리")
     parser.add_argument(
         "--category",
@@ -158,6 +164,10 @@ def main() -> None:
         help="쉼표로 구분한 product_id만 처리. 회사 공통 약관은 자동 포함",
     )
     args = parser.parse_args()
+
+    if args.recreate and not args.dry_run:
+        drop_collection()
+        print("기존 컬렉션 삭제됨 — 새 스키마로 다시 만든다")
 
     entries = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 

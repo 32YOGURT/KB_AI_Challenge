@@ -12,6 +12,9 @@ tiktoken
 # Vector DB
 qdrant-client
 
+# 한국어 형태소 분석 (하이브리드 검색의 sparse/BM25 토크나이저)
+kiwipiepy
+
 # PDF parsing
 pdfplumber
 docling
