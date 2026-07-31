@@ -117,7 +117,7 @@ export function CheckWorkspace({ productId }: { productId: string }) {
           <p className="text-xs uppercase tracking-[0.2em] text-brand font-data">
             Fin-Guard AI
           </p>
-          <h3 className="mt-2 font-display text-xl italic text-ink">
+          <h3 className="mt-2 font-data text-xl text-ink">
             가입 전 위험성 스캔 중
           </h3>
           <ul className="mt-6 space-y-2.5">

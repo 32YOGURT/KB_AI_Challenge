@@ -40,6 +40,7 @@ export function RiskVerdictCard({
                 >
                   {point.text}
                 </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-muted">{point.detail}</p>
 
                 {basis &&
                   (basis.source_key ? (

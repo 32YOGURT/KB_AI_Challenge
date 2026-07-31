@@ -29,6 +29,7 @@ class RiskBasis(BaseModel):
 
 class RiskPoint(BaseModel):
     text: str
+    detail: str
     basis: RiskBasis | None = None
 
 

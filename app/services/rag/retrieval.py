@@ -19,6 +19,7 @@ from qdrant_client.models import (
     Fusion,
     FusionQuery,
     IsNullCondition,
+    MatchAny,
     MatchValue,
     Modifier,
     PayloadField,
@@ -29,7 +30,7 @@ from qdrant_client.models import (
 )
 
 from app.clients.qdrant_client import get_client
-from app.schemas import ClauseChunk, ClauseSearchResult
+from app.schemas import ClauseChunk, ClauseSearchResult, SearchQuery
 from app.services.rag.embeddings import EMBEDDING_DIM, embed_text, embed_texts
 from app.services.rag.sparse import to_sparse_vector
 
@@ -80,16 +81,18 @@ def upsert_clauses(chunks: list[ClauseChunk]) -> None:
     get_client().upsert(collection_name=COLLECTION_NAME, points=points)
 
 
-# query_builder가 이제 유저 신호를 반영해 쿼리를 LLM으로 동적 생성하므로, 쿼리 문자열이
-# 더 이상 고정 집합이 아니다 — 캐시 히트율은 낮아지지만(요청마다 문구가 조금씩 다를 수
-# 있음), 우연히 같은 문구가 재사용되는 경우(폴백 시 정적 템플릿, 또는 LLM이 비슷한 유저
-# 상황에 비슷한 쿼리를 생성하는 경우)엔 여전히 임베딩 API 호출을 아낄 수 있어 캐시 자체는
-# 유지한다.
+# query_builder가 결정론적 템플릿/임계값으로 쿼리를 만들므로 문구 자체는 고정 집합에
+# 가깝다 — 같은 카테고리/신호 조합이면 쿼리 문자열이 그대로 재사용되어 캐시 히트율이 높다.
 _embed_query = lru_cache(maxsize=64)(embed_text)
 
 
 def search_clauses(
-    product_id: str, company: str, query: str, top_k: int = 5, mode: SearchMode = "hybrid"
+    product_id: str,
+    company: str,
+    query: str,
+    top_k: int = 5,
+    mode: SearchMode = "hybrid",
+    doc_types: list[str] | None = None,
 ) -> list[ClauseSearchResult]:
     """product_id 전용 문서 + company 공통 문서(기본약관 등)를 함께 검색한다.
 
@@ -100,11 +103,18 @@ def search_clauses(
     hybrid는 RRF 점수(1/(60+rank) 스케일이라 0.02 안팎)다. **mode가 다른 결과끼리 점수를
     비교하면 안 된다.** 같은 mode 안에서의 순위 비교만 의미가 있다.
 
+    doc_types를 지정하면(예: ["상품설명서"]) 그 문서 종류에서만 검색한다 — 위험 축과
+    상품설명 축을 서로 다른 문서에서 찾도록 query_builder가 지정한다.
+
     컬렉션이 아직 색인되지 않은 경우(RAG miss) 빈 리스트를 반환한다 — 호출부(LLM 추론)가
     이를 "근거 조항 없음"으로 처리한다.
     """
+    must_conditions = [FieldCondition(key="company", match=MatchValue(value=company))]
+    if doc_types:
+        must_conditions.append(FieldCondition(key="doc_type", match=MatchAny(any=doc_types)))
+
     query_filter = Filter(
-        must=[FieldCondition(key="company", match=MatchValue(value=company))],
+        must=must_conditions,
         should=[
             FieldCondition(key="product_id", match=MatchValue(value=product_id)),
             IsNullCondition(is_null=PayloadField(key="product_id")),
@@ -152,7 +162,7 @@ def search_clauses(
 def search_clauses_multi(
     product_id: str,
     company: str,
-    queries: list[str],
+    queries: list[SearchQuery],
     top_k_per_query: int = 2,
     mode: SearchMode = "hybrid",
 ) -> list[ClauseSearchResult]:
@@ -168,7 +178,12 @@ def search_clauses_multi(
     best: dict[str, ClauseSearchResult] = {}
     for query in queries:
         for result in search_clauses(
-            product_id=product_id, company=company, query=query, top_k=top_k_per_query, mode=mode
+            product_id=product_id,
+            company=company,
+            query=query.text,
+            top_k=top_k_per_query,
+            mode=mode,
+            doc_types=query.doc_types,
         ):
             existing = best.get(result.content_hash)
             if existing is None or result.score > existing.score:
