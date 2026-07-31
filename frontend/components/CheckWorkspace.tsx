@@ -19,6 +19,9 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const ACTION_BUTTON =
+  "rounded-sm border border-line px-4 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-paper";
+
 // 원문 PDF를 보고 돌아왔을 때 스캔(=LLM 호출)을 다시 돌리지 않도록 결과를 세션에 남긴다.
 // 유저를 전환하면 키가 달라져서 새로 판정된다.
 function readCache(key: string): CheckResponse | null {
@@ -171,11 +174,11 @@ export function CheckWorkspace({ productId }: { productId: string }) {
           basis={selectedBasis}
         />
 
-        <aside className="max-h-[45%] w-full shrink-0 overflow-y-auto bg-paper p-5 md:max-h-none md:w-[400px]">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted font-data">
+        <aside className="max-h-[45%] w-full shrink-0 overflow-y-auto bg-panel p-6 md:max-h-none md:w-[400px]">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-muted font-data">
             가입 전 최종 점검
           </p>
-          <h1 className="mt-1 mb-3 text-xl font-semibold text-ink">
+          <h1 className="mt-1 mb-5 text-xl font-semibold text-ink">
             {report.product_name}
           </h1>
 
@@ -185,22 +188,19 @@ export function CheckWorkspace({ productId }: { productId: string }) {
             onSelectBasis={(basis) => runId && setPicked({ runId, basis })}
           />
 
-          <div className="mt-4 flex gap-3">
-            <button
-              onClick={() => router.back()}
-              className="flex-1 rounded-sm border border-line bg-panel px-4 py-3 text-sm font-semibold text-ink transition-colors hover:bg-[#F7F8FB]"
-            >
+          <div className="mt-6 flex flex-col gap-2">
+            <button onClick={() => router.back()} className={ACTION_BUTTON}>
               ◀ 다시 생각하기
             </button>
             <button
               onClick={() => runId && setConfirmedRunId(runId)}
-              className="flex-1 rounded-sm px-4 py-3 text-sm font-medium text-muted underline decoration-line underline-offset-4 transition-colors hover:text-ink"
+              className={ACTION_BUTTON}
             >
               위험 감수하고 계속하기 ➔
             </button>
           </div>
           {confirmedRunId === runId && (
-            <p className="animate-fade-in mt-3 text-center text-xs text-muted font-data">
+            <p className="animate-fade-in mt-2 text-center text-xs text-muted font-data">
               (데모) 실제 가입은 은행 홈페이지에서 진행됩니다.
             </p>
           )}
