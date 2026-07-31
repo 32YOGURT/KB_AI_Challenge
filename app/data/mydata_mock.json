@@ -1,6 +1,7 @@
 {
   "user_c": {
     "display_name": "유저 C",
+    "description": "KB국민은행에 정기예금 1억원. 현금흐름 흑자 (아직 재설계 전)",
     "institutions": {
       "KB국민은행": {
         "accounts": [
@@ -102,6 +103,7 @@
   },
   "user_d": {
     "display_name": "유저 D",
+    "description": "연동된 계좌 없음. 카드만 보유 (아직 재설계 전)",
     "institutions": {},
     "cards": [
       {

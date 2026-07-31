@@ -3,6 +3,39 @@ export type RiskLevel = "RED" | "YELLOW" | "GREEN";
 export interface UserProfile {
   id: string;
   display_name: string;
+  description: string;
+}
+
+// app/schemas/signals/* 미러링 — 마이데이터 목업에서 집계한 신호.
+export interface LiquiditySignal {
+  balance_amt: number;
+  withdrawable_amt: number;
+  recent_net_cash_flow: number;
+  transaction_count: number;
+}
+
+export interface InstitutionBalance {
+  org_code: string;
+  total_balance: number;
+  is_over_protection_limit: boolean;
+}
+
+export interface MaturityItem {
+  org_code: string;
+  account_num: string;
+  prod_name: string;
+  exp_date: string;
+}
+
+export interface AssetDistributionSignal {
+  by_institution: InstitutionBalance[];
+  upcoming_maturities: MaturityItem[];
+}
+
+export interface UserSignals {
+  user_id: string;
+  liquidity: LiquiditySignal;
+  asset_distribution: AssetDistributionSignal;
 }
 
 export interface RiskBasis {
