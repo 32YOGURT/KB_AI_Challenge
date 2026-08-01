@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { documentOpenUrl } from "@/lib/api";
 import { useUser } from "@/context/UserContext";
 import type { CatalogProduct } from "@/lib/types";
 
@@ -47,15 +48,22 @@ export function CatalogList({ products }: { products: CatalogProduct[] }) {
             key={p.product_id}
             className={`flex items-center gap-4 px-5 py-4 ${i !== 0 ? "border-t border-line" : ""}`}
           >
-            <a
-              href={p.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="min-w-0 flex-1 hover:underline"
-            >
-              <span className="block font-medium text-ink">{p.name}</span>
-              <span className="mt-0.5 block text-sm text-muted">{p.bank}</span>
-            </a>
+            {p.doc_key ? (
+              <a
+                href={documentOpenUrl(p.doc_key)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 flex-1 hover:underline"
+              >
+                <span className="block font-medium text-ink">{p.name}</span>
+                <span className="mt-0.5 block text-sm text-muted">{p.bank} · 상품설명서 보기</span>
+              </a>
+            ) : (
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium text-ink">{p.name}</span>
+                <span className="mt-0.5 block text-sm text-muted">{p.bank}</span>
+              </span>
+            )}
             <button
               onClick={() => router.push(`/check/${p.product_id}`)}
               disabled={!activeUser}

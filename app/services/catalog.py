@@ -18,21 +18,30 @@ def _load_manifest() -> list[dict]:
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
 
 
+def _representative(docs: list[dict]) -> dict:
+    """상품을 대표할 문서. 소비자용 요약인 상품설명서를 우선한다 — manifest 순서(크롤링 순서)에
+    기대면 같은 상품이 문서에 따라 다른 category로 분류돼 검색 축까지 달라진다."""
+    return next((d for d in docs if d.get("doc_type") == "상품설명서"), docs[0])
+
+
 @lru_cache
 def load_catalog() -> dict[str, CatalogProduct]:
-    catalog: dict[str, CatalogProduct] = {}
+    grouped: dict[str, list[dict]] = {}
     for doc in _load_manifest():
-        product_id = doc.get("product_id")
-        if not product_id or product_id in catalog or not doc.get("product_type"):
-            continue
+        if doc.get("product_id") and doc.get("product_type"):
+            grouped.setdefault(doc["product_id"], []).append(doc)
+
+    catalog: dict[str, CatalogProduct] = {}
+    for product_id, docs in grouped.items():
+        rep = _representative(docs)
         catalog[product_id] = CatalogProduct(
             product_id=product_id,
-            bank=doc["company"],
-            name=doc["product_name"],
-            product_type=doc["product_type"],
-            category=doc["category"],
-            sub_category=doc["sub_category"],
-            source_url=doc["source_page_url"],
+            bank=rep["company"],
+            name=rep["product_name"],
+            product_type=rep["product_type"],
+            category=rep["category"],
+            sub_category=rep["sub_category"],
+            doc_key=rep["saved_path"],
         )
     return catalog
 

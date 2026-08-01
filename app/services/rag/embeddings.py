@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import tiktoken
 
 from app.clients.openai_client import get_client
@@ -14,7 +16,11 @@ EMBEDDING_BATCH_SIZE = 32
 # — 정확히 8192에 맞춰 자르면 근소한 계산 차이로 여전히 넘는 경우가 생길 수 있어서다.
 MAX_EMBED_TOKENS = 8000
 
-_encoding = tiktoken.encoding_for_model(EMBEDDING_MODEL)
+@lru_cache
+def _get_encoding():
+    """tiktoken은 인코딩 파일을 원격에서 받아 캐시한다 — 임포트 시점에 받으면 네트워크
+    실패가 앱 기동 자체를 막으므로 첫 사용까지 미룬다."""
+    return tiktoken.encoding_for_model(EMBEDDING_MODEL)
 
 
 def split_for_embedding(text: str) -> list[str]:
@@ -27,20 +33,21 @@ def split_for_embedding(text: str) -> list[str]:
     줄 단위로 그리디하게 묶어서 자르고, 한 줄 자체가 상한을 넘는 극단적인 경우에만 그 줄을
     토큰 단위로 강제 분할한다.
     """
-    if len(_encoding.encode(text)) <= MAX_EMBED_TOKENS:
+    encoding = _get_encoding()
+    if len(encoding.encode(text)) <= MAX_EMBED_TOKENS:
         return [text]
 
     parts: list[str] = []
     current: list[str] = []
     current_tokens = 0
     for line in text.split("\n"):
-        line_token_ids = _encoding.encode(line)
+        line_token_ids = encoding.encode(line)
         if len(line_token_ids) > MAX_EMBED_TOKENS:
             if current:
                 parts.append("\n".join(current))
                 current, current_tokens = [], 0
             for i in range(0, len(line_token_ids), MAX_EMBED_TOKENS):
-                parts.append(_encoding.decode(line_token_ids[i : i + MAX_EMBED_TOKENS]))
+                parts.append(encoding.decode(line_token_ids[i : i + MAX_EMBED_TOKENS]))
             continue
         if current and current_tokens + len(line_token_ids) > MAX_EMBED_TOKENS:
             parts.append("\n".join(current))

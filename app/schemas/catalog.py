@@ -10,4 +10,4 @@ class CatalogProduct(BaseModel):
     product_type: str  # 은행 무관 정규 분류 (정기예금/적금/입출금자유예금/외화예금/주택청약)
     category: str  # 은행 사이트 원문 분류 — RAG 검색 축(query_builder) 선택 키로 쓰인다
     sub_category: str
-    source_url: str
+    doc_key: str | None = None  # 원문 PDF(상품설명서 우선) object key

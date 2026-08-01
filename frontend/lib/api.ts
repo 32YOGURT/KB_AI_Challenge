@@ -51,6 +51,11 @@ export function presignDocument(key: string): Promise<PresignedDocument> {
   return request<PresignedDocument>(`/api/documents/presign?key=${encodeURIComponent(key)}`);
 }
 
+/** <a href>로 바로 열 수 있는 원문 PDF 주소. 서버가 presigned URL로 리다이렉트한다. */
+export function documentOpenUrl(key: string): string {
+  return `${PUBLIC_BASE_URL}/api/documents/open?key=${encodeURIComponent(key)}`;
+}
+
 export function fetchCatalog(productType?: string): Promise<CatalogProduct[]> {
   const query = productType ? `?product_type=${encodeURIComponent(productType)}` : "";
   return request<CatalogProduct[]>(`/api/catalog/products${query}`);
