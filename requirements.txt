@@ -1,3 +1,7 @@
+# 배포 런타임(app/)에 실제로 필요한 의존성만 둔다 — deploy/backend.Dockerfile이 이 파일만
+# 설치한다. 크롤링/색인 스크립트(scripts/)용 무거운 패키지는 requirements-tools.txt로 분리했다
+# (docling이 torch를 끌고 와 그것만 1GB 가까이 되는데, EC2 런타임에선 쓰이지 않는다).
+
 # Web framework
 fastapi
 uvicorn[standard]
@@ -19,12 +23,5 @@ qdrant-client
 minio
 boto3
 
-# PDF parsing
-pdfplumber
-docling
-
 # Config
 python-dotenv
-
-# Crawling (상품설명서/약관 PDF 다운로드)
-playwright

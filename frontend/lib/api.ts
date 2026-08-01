@@ -6,7 +6,12 @@ import type {
   UserSignals,
 } from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+// 브라우저는 공개 URL로, Next.js 서버(서버 컴포넌트)는 도커 내부 네트워크로 백엔드를 부른다.
+// 서버에서까지 공개 도메인으로 나가면 같은 호스트 안인데 DNS/TLS/리버스프록시를 한 바퀴 돌고,
+// 그 경로가 준비되기 전(부팅 직후 등)엔 SSR이 통째로 실패한다.
+const PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
+const INTERNAL_BASE_URL = process.env.INTERNAL_API_BASE_URL ?? PUBLIC_BASE_URL;
+const API_BASE_URL = typeof window === "undefined" ? INTERNAL_BASE_URL : PUBLIC_BASE_URL;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {

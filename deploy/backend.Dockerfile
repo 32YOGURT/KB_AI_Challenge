@@ -8,6 +8,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+# 상품 카탈로그(app/services/catalog.py가 런타임에 읽음). 없으면 /api/catalog, /api/check가
+# 전부 죽는다 — 캐시 디렉터리는 빼고 manifest만 넣는다.
+COPY crawled_data/manifest.json ./crawled_data/manifest.json
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

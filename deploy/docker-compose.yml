@@ -1,11 +1,29 @@
 
 services:
+  # 유일한 공개 진입점. 443만 열고 경로로 프론트/백엔드에 분기한다.
+  caddy:
+    image: caddy:2-alpine
+    container_name: kb-caddy
+    ports:
+      - "80:80"    # Let's Encrypt HTTP-01 챌린지 + HTTPS 리다이렉트
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN must be set in deploy/.env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data      # 발급받은 인증서. 날리면 Let's Encrypt 발급 한도를 다시 먹는다
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
   qdrant:
     image: qdrant/qdrant:latest
     container_name: kb-qdrant
     ports:
-      - "127.0.0.1:6333:6333"   # REST API + Web UI
-      - "127.0.0.1:6334:6334"   # gRPC API
+      - "127.0.0.1:6333:6333"   # 외부 비노출. 로컬에서 색인을 밀어넣을 땐 SSH 터널로 접근
+      - "127.0.0.1:6334:6334"
     environment:
       QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?QDRANT_API_KEY must be set in deploy/.env}
     volumes:
@@ -20,8 +38,9 @@ services:
     env_file: .env
     environment:
       QDRANT_URL: http://qdrant:6333
-    ports:
-      - "8000:8000"
+    # 호스트 포트를 열지 않는다 — caddy가 도커 네트워크로만 접근한다.
+    expose:
+      - "8000"
     depends_on:
       - qdrant
     restart: unless-stopped
@@ -31,13 +50,19 @@ services:
       context: ../frontend
       dockerfile: ../deploy/frontend.Dockerfile
       args:
+        # NEXT_PUBLIC_*은 빌드 시점에 클라이언트 번들에 박히므로 build arg로 받는다.
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     container_name: kb-frontend
-    ports:
-      - "3000:3000"
+    environment:
+      # 서버 컴포넌트(SSR)가 쓰는 주소. 런타임에 읽히므로 build arg가 아니라 environment.
+      INTERNAL_API_BASE_URL: http://backend:8000
+    expose:
+      - "3000"
     depends_on:
       - backend
     restart: unless-stopped
 
 volumes:
   qdrant_data:
+  caddy_data:
+  caddy_config:

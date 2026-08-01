@@ -1,0 +1,5 @@
+# builder 스테이지가 COPY . . 을 하는데, 호스트(Windows)의 node_modules가 딸려 들어가면
+# deps 스테이지에서 설치한 리눅스용 node_modules를 덮어써서 빌드가 깨진다.
+node_modules/
+.next/
+.git/

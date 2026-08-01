@@ -1,0 +1,20 @@
+# 프론트/백엔드를 한 도메인 뒤에 두고 경로로 분기한다. 브라우저 입장에서 둘이 같은
+# origin이 되므로 CORS 자체가 필요 없어진다 (S3 presigned URL은 여전히 다른 origin이라
+# 버킷 CORS는 별도로 필요).
+#
+# 인증서는 Caddy가 Let's Encrypt로 자동 발급/갱신한다 — 80/443이 열려 있어야 하고,
+# DOMAIN이 이 서버 공인 IP를 가리키고 있어야 한다.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# 백엔드는 /api 프리픽스를 그대로 받는다(app/api/*.py의 router prefix가 "/api").
+	# 경로를 잘라내면 안 되므로 handle_path가 아니라 handle을 쓴다.
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

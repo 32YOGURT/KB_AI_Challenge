@@ -1,0 +1,10 @@
+# 로컬에서 크롤링/색인(scripts/)을 돌릴 때만 필요한 의존성. 배포 이미지에는 설치하지 않는다.
+#     pip install -r requirements-tools.txt
+-r requirements.txt
+
+# PDF -> markdown 파싱 (scripts/rag/pdf_to_markdown.py).
+# torch/transformers/cv2 등을 끌고 와 설치 용량이 1GB 가까이 된다.
+docling
+
+# 상품설명서/약관 PDF 크롤링 (scripts/crawl/)
+playwright
