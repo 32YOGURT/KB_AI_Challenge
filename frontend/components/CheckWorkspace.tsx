@@ -61,7 +61,7 @@ export function CheckWorkspace({ productId }: { productId: string }) {
     if (!activeUser || !runId || startedRef.current === runId) return;
     startedRef.current = runId;
 
-    const cacheKey = `finguard.check.${runId}`;
+    const cacheKey = `finmark.check.${runId}`;
     const cached = readCache(cacheKey);
     const load = cached
       ? Promise.resolve(cached)
@@ -115,7 +115,7 @@ export function CheckWorkspace({ productId }: { productId: string }) {
             <div className="animate-scan-sweep h-16 w-full bg-gradient-to-b from-transparent via-gold/25 to-transparent" />
           </div>
           <p className="text-xs uppercase tracking-[0.2em] text-brand font-data">
-            Fin-Guard AI
+            FinMark AI
           </p>
           <h3 className="mt-2 font-data text-xl text-ink">
             가입 전 위험성 스캔 중

@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { UserProfile } from "@/lib/types";
 import { fetchUsers } from "@/lib/api";
 
-const STORAGE_KEY = "finguard.activeUserId";
+const STORAGE_KEY = "finmark.activeUserId";
 
 interface UserContextValue {
   users: UserProfile[];

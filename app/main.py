@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import catalog, check, documents, mydata, users
 from app.config import ALLOWED_ORIGINS
 
-app = FastAPI(title="Fin-Guard AI API")
+app = FastAPI(title="FinMark AI API")
 
 app.add_middleware(
     CORSMiddleware,
