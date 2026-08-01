@@ -15,6 +15,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from app.config import AWS_REGION, S3_BUCKET_NAME
@@ -22,7 +23,14 @@ from app.config import AWS_REGION, S3_BUCKET_NAME
 
 @lru_cache
 def get_client():
-    return boto3.client("s3", region_name=AWS_REGION)
+    # endpoint_url을 리전으로 못 박지 않으면 presigned URL이 글로벌 호스트로 생성돼, 서명 리전과
+    # 어긋나 403이 난다. 실제 API 호출은 boto3가 리다이렉트를 따라가 성공해서 잘 드러나지 않는다.
+    return boto3.client(
+        "s3",
+        region_name=AWS_REGION,
+        endpoint_url=f"https://s3.{AWS_REGION}.amazonaws.com",
+        config=Config(s3={"addressing_style": "virtual"}, signature_version="s3v4"),
+    )
 
 
 def download_to_path(key: str, dest: Path) -> None:
