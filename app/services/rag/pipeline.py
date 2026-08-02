@@ -1,9 +1,17 @@
 import re
 
-from app.schemas import CheckResponse, MatchedClause, RiskBasis, RiskPoint
+from app.schemas import (
+    AskResponse,
+    CheckResponse,
+    MatchedClause,
+    RiskBasis,
+    RiskPoint,
+    SearchQuery,
+    SuggestedQuestion,
+)
 from app.schemas.check import CheckSubject
 from app.services.mydata.user_signals import get_user_signals
-from app.services.rag.llm_inference import infer_risk_report
+from app.services.rag.llm_inference import infer_answer, infer_risk_report
 from app.services.rag.query_builder import build_search_queries
 from app.services.rag.retrieval import search_clauses_multi
 
@@ -70,4 +78,27 @@ def generate_risk_report(subject: CheckSubject, user_id: str) -> CheckResponse:
             )
             for p in result["points"]
         ],
+        suggested_questions=[SuggestedQuestion(**q) for q in result["suggested_questions"]],
+    )
+
+
+def answer_question(
+    subject: CheckSubject, user_id: str, question: str, search_query: str | None = None
+) -> AskResponse:
+    """추천 질문에 대해 같은 상품의 약관을 다시 검색하고 근거와 함께 답한다.
+
+    search_query는 리포트 생성 시 LLM이 약관 어휘로 만들어 둔 검색어다 — 질문 문장을 그대로
+    검색하면 소비자 어휘와 약관 어휘가 어긋나 sparse 매칭이 약해진다.
+    """
+    signals = get_user_signals(user_id)
+    queries = [SearchQuery(text=search_query or question)]
+    clauses = search_clauses_multi(
+        product_id=subject.product_id, company=subject.bank, queries=queries, top_k_per_query=6
+    )
+    result = infer_answer(subject, signals, question, clauses)
+
+    return AskResponse(
+        question=question,
+        answer=result["answer"],
+        basis=_build_basis(result["clause_index"], result["evidence_quote"], clauses),
     )

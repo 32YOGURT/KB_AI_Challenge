@@ -1,5 +1,14 @@
 from app.schemas.catalog import CatalogProduct
-from app.schemas.check import CheckRequest, CheckResponse, CheckSubject, RiskBasis, RiskPoint
+from app.schemas.check import (
+    AskRequest,
+    AskResponse,
+    CheckRequest,
+    CheckResponse,
+    CheckSubject,
+    RiskBasis,
+    RiskPoint,
+    SuggestedQuestion,
+)
 from app.schemas.mydata.auth import TokenRequest, TokenResponse
 from app.schemas.rag.clause import ClauseChunk, ClauseSearchResult, MatchedClause
 from app.schemas.rag.query import SearchQuery
@@ -16,11 +25,14 @@ __all__ = [
     "CardCategorySignal",
     "CategorySpend",
     "CatalogProduct",
+    "AskRequest",
+    "AskResponse",
     "CheckRequest",
     "CheckResponse",
     "CheckSubject",
     "RiskBasis",
     "RiskPoint",
+    "SuggestedQuestion",
     "TokenRequest",
     "TokenResponse",
     "ClauseChunk",

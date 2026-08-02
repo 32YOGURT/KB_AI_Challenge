@@ -36,8 +36,27 @@ class RiskPoint(BaseModel):
     basis: RiskBasis | None = None
 
 
+class SuggestedQuestion(BaseModel):
+    question: str
+    search_query: str  # 약관 어휘 기반 검색 키워드 (질문 문장 그대로 검색하면 용어가 어긋난다)
+
+
 class CheckResponse(BaseModel):
     product_id: str
     product_name: str
     user_id: str
     points: list[RiskPoint]
+    suggested_questions: list[SuggestedQuestion] = []
+
+
+class AskRequest(BaseModel):
+    product_id: str
+    user_id: str
+    question: str
+    search_query: str | None = None  # 없으면 question을 그대로 검색어로 쓴다
+
+
+class AskResponse(BaseModel):
+    question: str
+    answer: str
+    basis: RiskBasis | None = None

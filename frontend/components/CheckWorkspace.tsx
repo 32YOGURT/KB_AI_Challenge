@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { checkProduct } from "@/lib/api";
 import { useUser } from "@/context/UserContext";
 import type { CheckResponse, RiskBasis } from "@/lib/types";
+import { FollowUpQuestions } from "./FollowUpQuestions";
 import { RiskVerdictCard } from "./RiskVerdictCard";
 import { SourcePdfViewer } from "./SourcePdfViewer";
 import { UserSwitcher } from "./UserSwitcher";
@@ -183,6 +184,17 @@ export function CheckWorkspace({ productId }: { productId: string }) {
             selectedBasis={selectedBasis}
             onSelectBasis={(basis) => runId && setPicked({ runId, basis })}
           />
+
+          {activeUser && (
+            <FollowUpQuestions
+              productId={productId}
+              userId={activeUser.id}
+              // 이전 버전 캐시에는 이 필드가 없다.
+              questions={report.suggested_questions ?? []}
+              selectedBasis={selectedBasis}
+              onSelectBasis={(basis) => runId && setPicked({ runId, basis })}
+            />
+          )}
         </aside>
       </div>
     </div>

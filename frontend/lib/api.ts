@@ -1,4 +1,5 @@
 import type {
+  AskResponse,
   CatalogProduct,
   CheckResponse,
   PresignedDocument,
@@ -33,6 +34,23 @@ export function checkProduct(productId: string, userId: string): Promise<CheckRe
   return request<CheckResponse>("/api/check", {
     method: "POST",
     body: JSON.stringify({ product_id: productId, user_id: userId }),
+  });
+}
+
+export function askQuestion(
+  productId: string,
+  userId: string,
+  question: string,
+  searchQuery?: string,
+): Promise<AskResponse> {
+  return request<AskResponse>("/api/ask", {
+    method: "POST",
+    body: JSON.stringify({
+      product_id: productId,
+      user_id: userId,
+      question,
+      search_query: searchQuery ?? null,
+    }),
   });
 }
 

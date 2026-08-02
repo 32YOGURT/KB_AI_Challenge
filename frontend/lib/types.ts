@@ -62,11 +62,23 @@ export interface RiskPoint {
   basis: RiskBasis | null;
 }
 
+export interface SuggestedQuestion {
+  question: string;
+  search_query: string; // 약관 어휘 기반 검색어. 그대로 /api/ask에 넘긴다
+}
+
 export interface CheckResponse {
   product_id: string;
   product_name: string;
   user_id: string;
   points: RiskPoint[];
+  suggested_questions: SuggestedQuestion[];
+}
+
+export interface AskResponse {
+  question: string;
+  answer: string;
+  basis: RiskBasis | null;
 }
 
 export interface PresignedDocument {

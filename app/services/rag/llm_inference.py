@@ -48,8 +48,53 @@ _RISK_REPORT_SCHEMA = {
                     "additionalProperties": False,
                 },
             },
+            "suggested_questions": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 4,
+                "description": "이 상품에 대해 사용자가 이어서 궁금해할 만한 질문. 위 포인트에서 이미 답한 내용은 제외한다.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "question": {
+                            "type": "string",
+                            "description": "사회 초년생이 실제로 물어볼 법한 자연스러운 한 문장 질문 (20~40자 내외)",
+                        },
+                        "search_query": {
+                            "type": "string",
+                            "description": "그 질문에 답할 조항을 찾기 위한 검색 키워드. 문장이 아니라 [약관 조항]에 실제로 쓰인 용어를 나열한다 (예: '중도해지 중도해지이율 특별중도해지').",
+                        },
+                    },
+                    "required": ["question", "search_query"],
+                    "additionalProperties": False,
+                },
+            },
         },
-        "required": ["points"],
+        "required": ["points", "suggested_questions"],
+        "additionalProperties": False,
+    },
+}
+
+_ANSWER_SCHEMA = {
+    "name": "clause_answer",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "answer": {
+                "type": "string",
+                "description": "질문에 대한 2~4문장 답변. 조항의 구체적 조건/숫자와 유저의 실제 수치를 인용해 쉬운 말로 설명한다.",
+            },
+            "clause_index": {
+                "type": ["integer", "null"],
+                "description": "답변의 근거가 된 [약관 조항] 목록의 번호(1부터). 근거가 없으면 null.",
+            },
+            "evidence_quote": {
+                "type": ["string", "null"],
+                "description": "clause_index가 가리키는 조항 원문에서 한 글자도 바꾸지 않고 그대로 가져온 10~40자 내외의 구절. clause_index가 null이면 이것도 null.",
+            },
+        },
+        "required": ["answer", "clause_index", "evidence_quote"],
         "additionalProperties": False,
     },
 }
@@ -83,6 +128,27 @@ _SYSTEM_PROMPT = """당신은 금융 상품 가입 직전 소비자를 위한 �
 8. clause_index가 null이 아니면, evidence_quote에 그 조항 원문에서 한 글자도 바꾸지 않고 그대로
    가져온 10~40자 내외의 핵심 문장/구절을 담는다. 요약하거나 의역하지 않는다. clause_index가
    null이면 evidence_quote도 null로 둔다.
+9. suggested_questions에는 이 사용자가 이어서 궁금해할 만한 질문 3~4개를 담는다.
+   - 위 포인트에서 이미 답한 내용은 넣지 않는다. 다른 각도의 궁금증을 낸다.
+   - question은 사회 초년생이 실제로 물어볼 법한 자연스러운 한 문장이다.
+   - search_query는 그 답을 찾을 검색 키워드다. 문장이 아니라 [약관 조항]에 실제로 등장하는
+     용어를 나열한다. 사용자 표현이 아니라 약관 표현을 쓴다(예: '우대금리'가 아니라 '우대이율').
+"""
+
+_ANSWER_SYSTEM_PROMPT = """당신은 금융 상품 약관을 쉽게 풀어주는 도우미입니다.
+주어진 [약관 조항]과 [유저 소비/자산 데이터]만 근거로 [질문]에 답하세요.
+
+규칙:
+1. 반드시 clause_answer JSON 스키마에 맞춰서만 응답한다. 다른 텍스트는 출력하지 않는다.
+2. answer는 2~4문장이다. 조항의 구체적 조건/숫자와 [유저 소비/자산 데이터]의 실제 수치를
+   인용해 사회 초년생도 이해할 수 있게 쓴다. 숫자는 주어진 자료에 적힌 그대로 옮겨 적고,
+   계산하거나 자릿수를 바꾸지 않는다.
+3. clause_index는 [약관 조항] 목록 앞에 붙은 번호([1], [2], ...) 중 하나를 그대로 고른다.
+   목록에 없는 번호를 지어내지 않는다.
+4. 주어진 조항으로 답할 수 없으면 clause_index를 null로 두고, answer에 "이 상품 약관에서는
+   확인되지 않는다"는 점을 분명히 밝힌다. 추측으로 답을 지어내지 않는다.
+5. clause_index가 null이 아니면, evidence_quote에 그 조항 원문에서 한 글자도 바꾸지 않고
+   그대로 가져온 10~40자 내외의 구절을 담는다. clause_index가 null이면 evidence_quote도 null.
 """
 
 
@@ -149,6 +215,29 @@ def infer_risk_report(subject: CheckSubject, signals: UserSignals, clauses: list
             {"role": "user", "content": user_prompt},
         ],
         response_format={"type": "json_schema", "json_schema": _RISK_REPORT_SCHEMA},
+    )
+
+    return json.loads(response.choices[0].message.content)
+
+
+def infer_answer(
+    subject: CheckSubject, signals: UserSignals, question: str, clauses: list[MatchedClause]
+) -> dict:
+    """추천 질문(또는 사용자 질문)에 대해 검색된 조항만 근거로 답하게 하고, 파싱된 JSON을 반환한다."""
+    user_prompt = (
+        f"[상품 정보]\n{subject.bank} {subject.name} ({subject.category})\n\n"
+        f"[유저 소비/자산 데이터]\n{format_signals(signals)}\n\n"
+        f"[약관 조항 (RAG 검색 결과)]\n{_format_clauses(clauses)}\n\n"
+        f"[질문]\n{question}"
+    )
+
+    response = get_client().chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": _ANSWER_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        response_format={"type": "json_schema", "json_schema": _ANSWER_SCHEMA},
     )
 
     return json.loads(response.choices[0].message.content)
