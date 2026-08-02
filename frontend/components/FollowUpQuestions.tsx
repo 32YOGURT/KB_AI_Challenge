@@ -79,7 +79,7 @@ export function FollowUpQuestions({
               <button
                 onClick={() => toggle(q)}
                 aria-expanded={expanded}
-                className={`flex w-full items-start gap-2 rounded-sm border px-3 py-2 text-left text-[13px] leading-relaxed transition-colors ${
+                className={`flex w-full items-start gap-2 rounded-sm border px-3 py-2 text-left text-sm leading-relaxed transition-colors ${
                   expanded
                     ? "border-gold/40 bg-gold-soft text-ink"
                     : "border-line text-ink/80 hover:border-gold/30 hover:bg-gold-soft/40"
@@ -92,14 +92,14 @@ export function FollowUpQuestions({
               {expanded && (
                 <div className="animate-fade-in px-3 py-2.5">
                   {state?.status === "loading" && (
-                    <p className="text-[13px] text-muted font-data">약관에서 찾는 중…</p>
+                    <p className="text-sm text-muted font-data">약관에서 찾는 중…</p>
                   )}
                   {state?.status === "error" && (
-                    <p className="text-[13px] text-risk-red">답변을 가져오지 못했습니다.</p>
+                    <p className="text-sm text-risk-red">답변을 가져오지 못했습니다.</p>
                   )}
                   {state?.status === "done" && (
                     <>
-                      <p className="text-[13px] leading-relaxed text-ink/80">
+                      <p className="text-[15px] leading-relaxed text-ink/85">
                         {state.answer.answer}
                       </p>
                       {state.answer.basis &&
@@ -109,7 +109,7 @@ export function FollowUpQuestions({
                             className={`mt-1.5 block max-w-full truncate text-left underline decoration-dotted underline-offset-4 transition-all font-data ${
                               state.answer.basis === selectedBasis
                                 ? "text-[13px] font-medium text-brand decoration-brand/50"
-                                : "text-[11px] text-muted decoration-line hover:text-brand"
+                                : "text-xs text-muted decoration-line hover:text-brand"
                             }`}
                           >
                             {state.answer.basis === selectedBasis ? "◀ " : ""}
@@ -117,7 +117,7 @@ export function FollowUpQuestions({
                             {state.answer.basis.page ? ` ${state.answer.basis.page}p` : ""}
                           </button>
                         ) : (
-                          <p className="mt-1.5 truncate text-[11px] text-muted font-data">
+                          <p className="mt-1.5 truncate text-xs text-muted font-data">
                             근거 · {state.answer.basis.source}
                           </p>
                         ))}

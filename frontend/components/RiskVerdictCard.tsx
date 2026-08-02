@@ -39,7 +39,11 @@ function PointRow({
         >
           {point.text}
         </p>
-        <p className="mt-1 text-[13px] leading-relaxed text-muted">
+        <p
+          className={`mt-1 leading-relaxed transition-all ${
+            selected ? "text-[15px] text-ink/85" : "text-sm text-ink/75"
+          }`}
+        >
           {point.detail}
         </p>
 
@@ -50,7 +54,7 @@ function PointRow({
               className={`mt-1.5 block max-w-full truncate text-left underline decoration-dotted underline-offset-4 transition-all font-data ${
                 selected
                   ? "text-[13px] font-medium text-brand decoration-brand/50"
-                  : "text-[11px] text-muted decoration-line hover:text-brand"
+                  : "text-xs text-muted decoration-line hover:text-brand"
               }`}
             >
               {selected ? "◀ " : ""}
@@ -58,7 +62,7 @@ function PointRow({
               {basis.page ? ` ${basis.page}p` : ""}
             </button>
           ) : (
-            <p className="mt-1.5 truncate text-[11px] text-muted font-data">
+            <p className="mt-1.5 truncate text-xs text-muted font-data">
               근거 · {basis.source}
             </p>
           ))}
